@@ -28,7 +28,6 @@ img { display: block; }
 /* The 3D version: a little roomier, for the shadow. */
 .three .cell { width: calc(var(--u) * var(--s) * var(--fw) * 1.2); }
 .three .cell .pic { height: calc(var(--u) * var(--s) * var(--fh) * 1.1); }
-.three .cell .live { top: auto; }
 
 /* An item, over the grid. */
 .item { position: fixed; inset: 0; z-index: 3; background: #fff; display: none; overflow-y: auto; }
@@ -46,7 +45,7 @@ img { display: block; }
 
 /* The 3D version: one live canvas takes the place of the photo under the pointer; on a thing's page the solid
    fills the stage and turns by dragging. */
-.cell .live { position: absolute; inset: 0; }
+.cell .live { position: absolute; pointer-events: none; }
 .cell.live-on .pic img { visibility: hidden; }
 .item .solid-box { position: absolute; inset: 0; cursor: grab; }
 .item .solid-box:active { cursor: grabbing; }

@@ -267,7 +267,9 @@ export function still(cell, item) {                      // rendered once, when 
       g.r.setPixelRatio(2.5);                             // sharp, also on a phone's screen
       frame(g, group, w * 1.4, h * 1.4);
       g.r.render(g.scene, g.cam);
-      img.src = crop(g.canvas);                            // trimmed to the thing and its shadow: it stands on the shelf
+      const cut = crop(g.canvas);                          // trimmed to the thing and its shadow: it stands on the shelf
+      img.src = cut.url;
+      cell._still = { W: g.canvas.width, H: g.canvas.height, ...cut };   // where the still sits in the full render
       g.r.setPixelRatio(Math.min(2, devicePixelRatio));
       cell.classList.add('solid-still');
     }).catch(() => {});
@@ -282,10 +284,10 @@ function crop(canvas) {
   for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 10) {
     if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
   }
-  if (x1 <= x0) return canvas.toDataURL('image/png');
+  if (x1 <= x0) { x0 = y0 = 0; x1 = c.width - 1; y1 = c.height - 1; }
   const o = document.createElement('canvas'); o.width = x1 - x0 + 1; o.height = y1 - y0 + 1;
   o.getContext('2d').drawImage(c, x0, y0, o.width, o.height, 0, 0, o.width, o.height);
-  return o.toDataURL('image/png');
+  return { url: o.toDataURL('image/png'), x0, y0, cw: o.width, ch: o.height };
 }
 export function hover(cell, item) {
   const g = shared();
@@ -294,9 +296,15 @@ export function hover(cell, item) {
     const group = await model(item);
     await g.queue;
     if (g.cell !== cell) return;
-    const pic = cell.querySelector('.pic');
+    const pic = cell.querySelector('.pic'), st = cell._still;
     place(g.scene, group);
-    frame(g, group, pic.clientWidth, pic.clientHeight);
+    frame(g, group, pic.clientWidth * 1.4, pic.clientHeight * 1.4);     // the same camera as the still
+    if (st) {                                             // and the same place and scale: no jump when it starts
+      const k = Math.min(pic.clientWidth / st.cw, pic.clientHeight / st.ch);
+      const left = (pic.clientWidth - st.cw * k) / 2, top = pic.clientHeight - st.ch * k;
+      Object.assign(g.canvas.style, { width: st.W * k + 'px', height: st.H * k + 'px',
+        left: left - st.x0 * k + 'px', top: top - st.y0 * k + 'px' });
+    }
     pic.appendChild(g.canvas);
     cell.classList.add('live-on');
     g.ry = 0;
