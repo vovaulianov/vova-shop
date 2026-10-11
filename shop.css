@@ -29,22 +29,22 @@ img { display: block; }
 .three .cell { width: calc(var(--u) * var(--s) * var(--fw)); }
 .three .cell .pic { height: calc(var(--u) * var(--s) * var(--fh)); }
 
-/* The price sticker, as from a price gun: a yellow label, the price stamped on it in grey; straight ends and
+/* The price sticker, as from a price gun: a red label, the price stamped on it in white; straight ends and
    a round bite top and bottom (the user picked this over wavy ends). */
 .tag { position: relative; z-index: 0; isolation: isolate; display: inline-block; margin-top: 6px;
-       padding: 7px 14px 6px; color: #4a4636; font: 500 14px/1 "SF Mono", ui-monospace, Menlo, monospace;
+       padding: 7px 14px 6px; color: #fff5ee; font: 500 14px/1 "SF Mono", ui-monospace, Menlo, monospace;
        letter-spacing: .08em; white-space: nowrap; }
-.tag::before { content: ''; position: absolute; inset: 0; z-index: -1; background: #f4d63a;
+.tag::before { content: ''; position: absolute; inset: 0; z-index: -1; background: #e2231a;
        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 56' preserveAspectRatio='none'%3E%3Cpath d='M3 2H33A7 7 0 0 0 47 2H117Q118 2 118 3V53Q118 54 117 54H47A7 7 0 0 0 33 54H3Q2 54 2 53V3Q2 2 3 2Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 56' preserveAspectRatio='none'%3E%3Cpath d='M3 2H35A5 5 0 0 0 45 2H117Q118 2 118 3V53Q118 54 117 54H45A5 5 0 0 0 35 54H3Q2 54 2 53V3Q2 2 3 2Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
 .tag.sold::before { background: #d8d8d8; }
 .tag.sold { color: #666; }
-.cell .label .tag { display: table; margin: 6px auto 0; color: #4a4636; }
+.cell .label .tag { display: table; margin: 6px auto 0; color: #fff5ee; }
 .item .info .price { margin: 10px 0 20px; }
 .item .info .price .tag { font-size: 15px; padding: 8px 17px 7px; margin: 0; }
 
 /* The buy button, glossy as web shops were around 2007: a gradient, the top half shining, a crisp rim, bold
-   letters with an engraved edge, a soft shadow on the floor under it. Three colours to choose (?btn=…). */
-.item .info a.buy { --top: #8ec5ff; --mid: #3f8fe6; --bot: #2c6fc4; --rim: #2a63b0; --ink: #fff; --inkedge: rgba(0,40,100,.45);
+   letters with an engraved edge, a soft shadow on the floor under it. Yellow, the user's pick. */
+.item .info a.buy { --top: #fff8a8; --mid: #ffe31a; --bot: #f5cf00; --rim: #d9b400; --ink: #3a3200; --inkedge: rgba(255,255,255,.6);
   position: relative; display: inline-block; margin-top: 8px; padding: 13px 34px 12px; border-radius: 9px;
   border: 1px solid var(--rim); color: var(--ink); text-decoration: none; text-transform: uppercase;
   font: 800 19px/1 "Helvetica Neue", Helvetica, Arial, sans-serif; letter-spacing: .02em;
@@ -55,8 +55,6 @@ img { display: block; }
   background: linear-gradient(rgba(255,255,255,.75), rgba(255,255,255,.15)); pointer-events: none; }
 .item .info a.buy:hover { filter: brightness(1.06); }
 .item .info a.buy:active { transform: translateY(1px); box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 8px 8px -8px rgba(0,0,0,.45); }
-[data-btn="yellow"] .item .info a.buy { --top: #fff8a8; --mid: #ffe31a; --bot: #f5cf00; --rim: #d9b400; --ink: #3a3200; --inkedge: rgba(255,255,255,.6); }
-[data-btn="silver"] .item .info a.buy { --top: #ffffff; --mid: #e9ebee; --bot: #d3d7dc; --rim: #b7bcc2; --ink: #4b4f55; --inkedge: rgba(255,255,255,.9); }
 
 /* An item, over the grid. */
 .item { position: fixed; inset: 0; z-index: 3; background: #fff; display: none; overflow-y: auto; }

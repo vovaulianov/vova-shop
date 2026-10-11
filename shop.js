@@ -6,7 +6,6 @@
 (function () {
   var root = document.body.dataset.root || '';
   var three = document.body.classList.contains('three');
-  document.body.dataset.btn = new URLSearchParams(location.search).get('btn') || 'blue';   /* buy button: blue, yellow, silver */
   var layout = document.body.dataset.layout || 'shelf';            /* shelf (photos), chaos (home) or one (kept aside) */
   var grid = document.querySelector('.grid'), more = document.querySelector('.more');
   var items = [], shown = 0, pay = '';
