@@ -234,15 +234,16 @@ function place(scene, group) {
 }
 
 /* ---------- the grid: each thing is a still of its solid; on hover the solid itself spins round ---------- */
-let grid = null;
-function shared() {
-  if (grid) return grid;
+// Two of them: one draws the stills, one the thing that spins. Sharing one let a still being drawn move the
+// camera (and take the thing) from under the spinning one, so it jumped in size.
+const contexts = {};
+function shared(kind = 'live') {
+  if (contexts[kind]) return contexts[kind];
   const canvas = document.createElement('canvas');
   canvas.className = 'live';
   const r = renderer(canvas), scene = stageScene();
   scene.environment = r.userData.env;
-  grid = { canvas, r, scene, cam: new THREE.PerspectiveCamera(22, 1, 0.1, 30), cell: null, ry: 0, loop: null, queue: Promise.resolve() };
-  return grid;
+  return contexts[kind] = { canvas, r, scene, cam: new THREE.PerspectiveCamera(22, 1, 0.1, 30), cell: null, ry: 0, loop: null, queue: Promise.resolve() };
 }
 const ROOM = 3.2;                                        // the render is 3.2× the box: the shadow fits at any turn
 function frame(g, group, w, h, room = 1) {               // the camera so the thing fills w/room × h/room
@@ -260,7 +261,7 @@ export function still(cell, item) {                      // rendered once, when 
   const seen = new IntersectionObserver(es => {
     if (!es[0].isIntersecting) return;
     seen.disconnect();
-    const g = shared();
+    const g = shared('stills');
     g.queue = g.queue.then(async () => {
       const group = await model(item), pic = cell.querySelector('.pic'), img = pic.querySelector('img');
       const w = pic.clientWidth, h = pic.clientHeight;
@@ -310,9 +311,9 @@ export function hover(cell, item) {
   const g = shared();
   cell.addEventListener('pointerenter', async () => {
     g.cell = cell;
-    const group = await model(item);
-    await g.queue;
-    if (g.cell !== cell) return;
+    const group = (await model(item)).clone();            // its own copy: the stills keep theirs
+    await shared('stills').queue;                          // this cell's still first: the spin starts exactly on it
+    if (g.cell !== cell || !cell._still) return;
     const pic = cell.querySelector('.pic'), st = cell._still;
     place(g.scene, group);
     frame(g, group, pic.clientWidth * ROOM, pic.clientHeight * ROOM, ROOM);   // the same camera as the still

@@ -58,21 +58,27 @@
   });
   function scatter() {
     var W = scatteredAt = grid.clientWidth, cells = [].slice.call(grid.children).filter(function (c) { return !c.dataset.placed; });
-    cells.forEach(function (c, i) {
-      var r = rand(c.dataset.id), w = c.offsetWidth, h = c.offsetHeight + 40, best = null;
-      for (var t = 0; t < 300 && !best; t++) {
-        var x = r() * Math.max(1, W - w), y = r() * (Math.max(600, placed.reduce(function (m, p) { return Math.max(m, p.y + p.h); }, 0)) + 200 * (t / 60));
-        var free = placed.every(function (p) { return x + w + 40 < p.x || p.x + p.w + 40 < x || y + h + 40 < p.y || p.y + p.h + 40 < y; });
-        if (free) best = { x: x, y: y, w: w, h: h };
+    var cs = getComputedStyle(grid), pl = parseFloat(cs.paddingLeft), pr = parseFloat(cs.paddingRight), pt = parseFloat(cs.paddingTop);
+    W -= pl + pr;                                           /* the floor is inside the padding (the title's column) */
+    var edge = Math.max(24, W * 0.07), gap = Math.max(24, W * 0.04);   /* room at the sides for turning, shadows */
+    cells.forEach(function (c) {
+      var r = rand(c.dataset.id), w = c.offsetWidth, h = c.querySelector('.pic').offsetHeight, best = null;
+      var floor = placed.reduce(function (m, p) { return Math.max(m, p.y + p.h); }, 0);
+      for (var t = 0; t < 400; t++) {                      /* many tries; a high one wins, but not always the highest */
+        var x = edge + r() * Math.max(1, W - w - 2 * edge), y = r() * (floor + h * 0.8);
+        var free = placed.every(function (p) { return x + w + gap < p.x || p.x + p.w + gap < x || y + h + gap * 2 < p.y || p.y + p.h + gap * 2 < y; });
+        var score = y + r() * h * 1.1;
+        if (free && (!best || score < best.score)) best = { x: x, y: y, w: w, h: h, score: score };
       }
-      best = best || { x: 0, y: placed.reduce(function (m, p) { return Math.max(m, p.y + p.h + 40); }, 0), w: w, h: h };
+      best = best || { x: edge, y: floor + gap * 2.5, w: w, h: h };
       placed.push(best);
       c.dataset.placed = 1;
-      c.style.left = best.x + 'px'; c.style.top = best.y + 'px';
-      c.style.transform = 'rotate(' + ((r() - 0.5) * 22).toFixed(1) + 'deg)';
+      c.style.left = pl + best.x + 'px'; c.style.top = pt + best.y + 'px';
+      c.querySelector('.pic').style.transform = 'rotate(' + ((r() - 0.5) * 22).toFixed(1) + 'deg)';   /* the thing turned, its name not */
     });
-    grid.style.height = placed.reduce(function (m, p) { return Math.max(m, p.y + p.h); }, 0) + 120 + 'px';
+    grid.style.height = pt + placed.reduce(function (m, p) { return Math.max(m, p.y + p.h); }, 0) + 120 + 'px';
   }
+
   new IntersectionObserver(function (e) { if (e[0].isIntersecting && shown < items.length) page(); }, { rootMargin: '800px' }).observe(more);
 
   /* ---------- an item ---------- */
