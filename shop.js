@@ -6,6 +6,7 @@
 (function () {
   var root = document.body.dataset.root || '';
   var three = document.body.classList.contains('three');
+  document.body.dataset.btn = new URLSearchParams(location.search).get('btn') || 'blue';   /* buy button: blue, yellow, silver */
   var layout = document.body.dataset.layout || 'shelf';            /* shelf (photos), chaos (home) or one (kept aside) */
   var grid = document.querySelector('.grid'), more = document.querySelector('.more');
   var items = [], shown = 0, pay = '';
@@ -96,7 +97,7 @@
     if (item.text) el('p', null, info).textContent = item.text;
     var link = item.pay || (pay ? pay + (pay.indexOf('?') < 0 ? '?' : '&') +                 /* the jar takes hryvnias only */
       ((item.currency || 'грн') === 'грн' ? 'a=' + item.price + '&' : '') + 't=' + encodeURIComponent(item.title) : '');
-    if (!item.sold && link) { var a = el('a', null, info); a.href = link; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'купити →'; }
+    if (!item.sold && link) { var a = el('a', null, info); a.href = link; a.target = '_blank'; a.rel = 'noopener'; a.className = 'buy'; a.textContent = 'купити'; }
 
     var big = el('img', 'photo', stage), solid = null, thumbs = el('div', 'thumbs', stage);
     function pick(k) {                                  /* k = -1: the 3D thing; otherwise a photo */

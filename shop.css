@@ -42,6 +42,22 @@ img { display: block; }
 .item .info .price { margin: 10px 0 20px; }
 .item .info .price .tag { font-size: 15px; padding: 8px 17px 7px; margin: 0; }
 
+/* The buy button, glossy as web shops were around 2007: a gradient, the top half shining, a crisp rim, bold
+   letters with an engraved edge, a soft shadow on the floor under it. Three colours to choose (?btn=…). */
+.item .info a.buy { --top: #8ec5ff; --mid: #3f8fe6; --bot: #2c6fc4; --rim: #2a63b0; --ink: #fff; --inkedge: rgba(0,40,100,.45);
+  position: relative; display: inline-block; margin-top: 8px; padding: 13px 34px 12px; border-radius: 9px;
+  border: 1px solid var(--rim); color: var(--ink); text-decoration: none; text-transform: uppercase;
+  font: 800 19px/1 "Helvetica Neue", Helvetica, Arial, sans-serif; letter-spacing: .02em;
+  text-shadow: 0 1px 0 var(--inkedge), 0 -1px 0 rgba(255,255,255,.25);
+  background: linear-gradient(var(--top), var(--mid) 50%, var(--bot) 51%, var(--mid));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7), inset 0 -2px 3px rgba(0,0,0,.12), 0 14px 10px -10px rgba(0,0,0,.45); }
+.item .info a.buy::after { content: ''; position: absolute; left: 3px; right: 3px; top: 2px; height: 46%; border-radius: 7px 7px 4px 4px;
+  background: linear-gradient(rgba(255,255,255,.75), rgba(255,255,255,.15)); pointer-events: none; }
+.item .info a.buy:hover { filter: brightness(1.06); }
+.item .info a.buy:active { transform: translateY(1px); box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 8px 8px -8px rgba(0,0,0,.45); }
+[data-btn="yellow"] .item .info a.buy { --top: #fff8a8; --mid: #ffe31a; --bot: #f5cf00; --rim: #d9b400; --ink: #3a3200; --inkedge: rgba(255,255,255,.6); }
+[data-btn="silver"] .item .info a.buy { --top: #ffffff; --mid: #e9ebee; --bot: #d3d7dc; --rim: #b7bcc2; --ink: #4b4f55; --inkedge: rgba(255,255,255,.9); }
+
 /* An item, over the grid. */
 .item { position: fixed; inset: 0; z-index: 3; background: #fff; display: none; overflow-y: auto; }
 .item.on { display: grid; grid-template-columns: 1fr 360px; gap: 32px; }
