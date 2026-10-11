@@ -4,7 +4,7 @@
    a console) a few millimetres thick with crisp edges; anything else (a toy) fuller, with soft rounded edges.
    The front photo is printed on the front, the back photo (if there is one) on the back, fitted to the same
    outline and mirrored; the sides take the colour of the thing's edge. Studio light, soft reflections and a
-   soft shadow under it. In the grid each thing is a still of its solid; one WebGL canvas, shared, moves into the
+   no shadow (the user asked). In the grid each thing is a still of its solid; one WebGL canvas, shared, moves into the
    cell under the pointer and spins the thing round. On a thing's page it turns by dragging, and slowly by itself. */
 import * as THREE from 'three';
 import { OrbitControls } from './vendor/OrbitControls.js';
@@ -121,7 +121,6 @@ function relief(front, back, ft, bt) {
   const group = new THREE.Group();
   [[sheet(1), frontMat, ft], [sheet(-1), backMat, null]].forEach(([geo, mat, depthMap]) => {
     const m = new THREE.Mesh(geo, mat);
-    m.castShadow = true;
     m.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, alphaMap: depthMap ? null : shape, map: depthMap, alphaTest: 0.5 });
     group.add(m);
   });
@@ -182,7 +181,6 @@ export async function model(item) {
       side,
     ];
     const mesh = new THREE.Mesh(geo2, mats);
-    mesh.castShadow = true;
     const inner = new THREE.Group(); inner.add(mesh);
     return fit(inner);
   })();
@@ -199,18 +197,27 @@ function fit(inner) {                                    // centred, and every t
   return group;
 }
 
-function stageScene() {
+/* Looks to choose from (?look=… shows one): how the studio is lit, and a finishing touch on the picture. */
+export const LOOKS = {
+  now:  { key: 1.3, hemi: 0.45, env: 0.55, filter: '' },
+  soft: { key: 0.75, hemi: 0.9, env: 0.75, filter: 'contrast(.86) saturate(.86) blur(.25px)' },
+  film: { key: 0.9, hemi: 0.75, env: 0.6, filter: 'contrast(.8) saturate(.7) sepia(.18) brightness(1.04) blur(.3px)' },
+  airy: { key: 0.55, hemi: 1.05, env: 0.9, filter: 'contrast(.7) brightness(1.12) saturate(.75) blur(.2px)' },
+};
+const look = LOOKS[new URLSearchParams(location.search).get('look')] || LOOKS.now;
+if (look.filter) {
+  const st = document.createElement('style');
+  st.textContent = '.cell .pic img, .cell .pic canvas, .item .solid-box canvas { filter: ' + look.filter + '; }';
+  document.head.appendChild(st);
+}
+
+function stageScene() {                                  // no shadow: the things stand on nothing but white
   const scene = new THREE.Scene();
-  const key = new THREE.DirectionalLight(0xffffff, 1.3);
-  key.position.set(1.2, 2.2, 2.4); key.castShadow = true;
-  key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0005; key.shadow.camera.near = 0.5; key.shadow.camera.far = 8;
-  Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3 });   /* wide: the shadow never meets an edge */
-  scene.add(key, new THREE.HemisphereLight(0xffffff, 0xe8e4de, 0.45));
-  scene.environmentIntensity = 0.55;                    /* light enough to read, not so much that colours wash out */
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.ShadowMaterial({ opacity: 0.14 }));
-  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
-  scene.add(ground);
-  scene.userData.ground = ground;
+  const key = new THREE.DirectionalLight(0xffffff, look.key);
+  key.position.set(1.2, 2.2, 2.4);
+  scene.add(key, new THREE.HemisphereLight(0xffffff, 0xe8e4de, look.hemi));
+  scene.environmentIntensity = look.env;
+  scene.userData.ground = new THREE.Object3D();
   return scene;
 }
 
@@ -219,7 +226,6 @@ function renderer(canvas) {
   r.setPixelRatio(Math.min(2, devicePixelRatio));
   r.toneMapping = THREE.NeutralToneMapping; r.toneMappingExposure = 1.0;   /* keeps the colours of the thing true */
   r.outputColorSpace = THREE.SRGBColorSpace;
-  r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
   const pm = new THREE.PMREMGenerator(r);
   r.userData = { env: pm.fromScene(new RoomEnvironment(), 0.04).texture };
   return r;
