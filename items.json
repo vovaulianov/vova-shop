@@ -2,7 +2,7 @@
  {
   "id": "kloun-tiahuchka",
   "title": "клоун-тягучка",
-  "price": 300,
+  "price": 777,
   "text": "тягнеться майже на метр і повертається назад. трохи страшний, дуже смішний",
   "photos": [
    {
@@ -574,6 +574,8 @@
     ]
    }
   ],
+  "currency": "$",
+  "size": 1.0,
   "back": 1,
   "pay": "",
   "sold": false,
@@ -582,7 +584,7 @@
  {
   "id": "nintendo-switch-animal-crossing-edition",
   "title": "nintendo switch animal crossing edition",
-  "price": 9000,
+  "price": 9999,
   "text": "консоль, док-станція, два джойкони з ремінцями і тримач для них. усе працює",
   "photos": [
    {
@@ -1416,6 +1418,8 @@
     ]
    }
   ],
+  "currency": "грн",
+  "size": 2.5,
   "back": 1,
   "pay": "",
   "sold": false,
@@ -1424,7 +1428,7 @@
  {
   "id": "animal-crossing-new-horizons",
   "title": "animal crossing: new horizons",
-  "price": 1200,
+  "price": 1337,
   "text": "гра для nintendo switch, картридж у коробці. американське видання, англійською",
   "photos": [
    {
@@ -1480,6 +1484,8 @@
     ]
    }
   ],
+  "currency": "грн",
+  "size": 1.75,
   "back": 1,
   "pay": "",
   "sold": false,

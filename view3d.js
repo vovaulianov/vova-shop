@@ -4,8 +4,8 @@
    a console) a few millimetres thick with crisp edges; anything else (a toy) fuller, with soft rounded edges.
    The front photo is printed on the front, the back photo (if there is one) on the back, fitted to the same
    outline and mirrored; the sides take the colour of the thing's edge. Studio light, soft reflections and a
-   soft shadow under it. One WebGL canvas is shared by the whole grid: it moves into the cell under the pointer,
-   and the thing there turns after the pointer. On a thing's page it turns by dragging, and slowly by itself. */
+   soft shadow under it. In the grid each thing is a still of its solid; one WebGL canvas, shared, moves into the
+   cell under the pointer and spins the thing round. On a thing's page it turns by dragging, and slowly by itself. */
 import * as THREE from 'three';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { RoomEnvironment } from './vendor/RoomEnvironment.js';
@@ -233,47 +233,87 @@ function place(scene, group) {
   scene.userData.ground.position.y = 0;
 }
 
-/* ---------- the grid: one canvas, lent to the cell under the pointer ---------- */
+/* ---------- the grid: each thing is a still of its solid; on hover the solid itself spins round ---------- */
 let grid = null;
-export function hover(cell, item) {
-  if (!grid) {
-    const canvas = document.createElement('canvas');
-    canvas.className = 'live';
-    const r = renderer(canvas), scene = stageScene();
-    scene.environment = r.userData.env;
-    const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 20);
-    grid = { canvas, r, scene, cam, cell: null, tx: 0, ty: 0, rx: 0, ry: 0, loop: null };
+function shared() {
+  if (grid) return grid;
+  const canvas = document.createElement('canvas');
+  canvas.className = 'live';
+  const r = renderer(canvas), scene = stageScene();
+  scene.environment = r.userData.env;
+  grid = { canvas, r, scene, cam: new THREE.PerspectiveCamera(22, 1, 0.1, 30), cell: null, ry: 0, loop: null, queue: Promise.resolve() };
+  return grid;
+}
+function frame(g, group, w, h) {                         // the camera so the thing fills its box, shadow included
+  const box = new THREE.Box3().setFromObject(group), sz = box.getSize(new THREE.Vector3());
+  const across = Math.max(sz.x, sz.z) * 1.08, tall = group.userData.height * 1.12, half = Math.tan(THREE.MathUtils.degToRad(11));
+  const dist = Math.max(tall / 2 / half, across / 2 / (half * w / h)) + Math.max(sz.x, sz.z) / 2;
+  g.cam.aspect = w / h; g.cam.updateProjectionMatrix();
+  g.cam.position.set(0, group.userData.height * 0.5 + dist * 0.09, dist);
+  g.cam.lookAt(0, group.userData.height * 0.44, 0);
+  g.r.setSize(w, h, false);
+  g.canvas.style.width = w + 'px'; g.canvas.style.height = h + 'px';
+}
+export function still(cell, item) {                      // rendered once, when the cell comes near the screen
+  const seen = new IntersectionObserver(es => {
+    if (!es[0].isIntersecting) return;
+    seen.disconnect();
+    const g = shared();
+    g.queue = g.queue.then(async () => {
+      const group = await model(item), pic = cell.querySelector('.pic'), img = pic.querySelector('img');
+      const w = pic.clientWidth, h = pic.clientHeight;
+      if (!w || !h) return;
+      place(g.scene, group); group.rotation.set(0, 0, 0);
+      g.r.setPixelRatio(2.5);                             // sharp, also on a phone's screen
+      frame(g, group, w * 1.4, h * 1.4);
+      g.r.render(g.scene, g.cam);
+      img.src = crop(g.canvas);                            // trimmed to the thing and its shadow: it stands on the shelf
+      g.r.setPixelRatio(Math.min(2, devicePixelRatio));
+      cell.classList.add('solid-still');
+    }).catch(() => {});
+  }, { rootMargin: '600px' });
+  seen.observe(cell);
+}
+function crop(canvas) {
+  const c = document.createElement('canvas'); c.width = canvas.width; c.height = canvas.height;
+  const g = c.getContext('2d'); g.drawImage(canvas, 0, 0);
+  const d = g.getImageData(0, 0, c.width, c.height).data;
+  let x0 = c.width, y0 = c.height, x1 = 0, y1 = 0;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 10) {
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
   }
-  const g = grid;
+  if (x1 <= x0) return canvas.toDataURL('image/png');
+  const o = document.createElement('canvas'); o.width = x1 - x0 + 1; o.height = y1 - y0 + 1;
+  o.getContext('2d').drawImage(c, x0, y0, o.width, o.height, 0, 0, o.width, o.height);
+  return o.toDataURL('image/png');
+}
+export function hover(cell, item) {
+  const g = shared();
   cell.addEventListener('pointerenter', async () => {
     g.cell = cell;
     const group = await model(item);
+    await g.queue;
     if (g.cell !== cell) return;
+    const pic = cell.querySelector('.pic');
     place(g.scene, group);
-    const pic = cell.querySelector('.pic'), w = pic.clientWidth;
-    g.r.setSize(w, w, false);
-    g.canvas.style.width = g.canvas.style.height = w + 'px';
-    g.cam.position.set(0, group.userData.height / 2 + 0.35, 3.1); g.cam.lookAt(0, group.userData.height / 2, 0);
+    frame(g, group, pic.clientWidth, pic.clientHeight);
     pic.appendChild(g.canvas);
     cell.classList.add('live-on');
-    g.rx = g.ry = 0;
-    if (!g.loop) g.loop = requestAnimationFrame(function tick() {
-      g.ry += (g.ty - g.ry) * 0.12; g.rx += (g.tx - g.rx) * 0.12;
+    g.ry = 0;
+    let last = performance.now();
+    if (!g.loop) g.loop = requestAnimationFrame(function tick(now) {
+      g.ry += (now - last) / 1000 * 1.6; last = now;      // about one turn in four seconds
       const thing = g.scene.children.find(o => o.userData.thing);
-      if (thing) { thing.rotation.y = g.ry; thing.rotation.x = g.rx; }
+      if (thing) thing.rotation.y = g.ry;
       g.r.render(g.scene, g.cam);
       g.loop = g.cell ? requestAnimationFrame(tick) : null;
     });
   });
-  cell.addEventListener('pointermove', e => {
-    if (g.cell !== cell) return;
-    const r = cell.getBoundingClientRect();
-    g.ty = ((e.clientX - r.left) / r.width - 0.5) * 2.2;
-    g.tx = ((e.clientY - r.top) / r.height - 0.5) * 0.5;
-  });
   cell.addEventListener('pointerleave', () => {
     if (g.cell !== cell) return;
     g.cell = null; cell.classList.remove('live-on');
+    const thing = g.scene.children.find(o => o.userData.thing);
+    if (thing) thing.rotation.y = 0;
     if (g.canvas.parentNode) g.canvas.parentNode.removeChild(g.canvas);
   });
 }

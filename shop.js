@@ -1,7 +1,8 @@
 /* shop.js — builds the grid from items.json, thirty at a time as you scroll (so it stays quick with thousands),
-   and opens an item over it (#id in the address, so a link to an item works). In the 3D version (3d/index.html
-   loads view3d.js first) the thing under the pointer becomes a solid that turns after it, and an item's page
-   shows the solid, turned by dragging, before its photos. */
+   and opens an item over it (#id in the address, so a link to an item works). Things stand on a shelf, each as big
+   as its `size` says (1 = a small toy), so their sizes read against each other. In the 3D version (3d/index.html
+   loads view3d.js first) each thing in the grid is its solid, which spins round when the pointer is on it, and
+   an item's page is the solid alone, turned by dragging. */
 (function () {
   var root = document.body.dataset.root || '';
   var three = document.body.classList.contains('three');
@@ -10,19 +11,27 @@
   var PAGE = 30;
 
   function el(tag, cls, parent) { var e = document.createElement(tag); if (cls) e.className = cls; if (parent) parent.appendChild(e); return e; }
-  function money(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' грн'; }
+  function money(item) {
+    var n = String(item.price).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
+    return item.currency === '$' ? '$' + n : n + '\u00A0' + (item.currency || 'грн');
+  }
   function src(p, size) { return root + p[size]; }
 
   function cell(item) {
     var c = el('div', 'cell' + (item.sold ? ' sold' : ''), grid);
+    var p0 = item.photos[0], long = Math.max(p0.w, p0.h);
+    c.style.setProperty('--s', item.size || 1);                   /* the box: its size, the photo's proportions */
+    c.style.setProperty('--fw', (p0.w / long).toFixed(3));
+    c.style.setProperty('--fh', (p0.h / long).toFixed(3));
+    c.style.setProperty('--pb', (0.0536 * long / p0.h).toFixed(4));   /* the air under the cut-out, so it stands on the line */
     var pic = el('div', 'pic', c), img = el('img', null, pic);
     img.src = src(item.photos[0], 's'); img.alt = item.title; img.loading = 'lazy'; img.decoding = 'async';
     img.width = item.photos[0].w; img.height = item.photos[0].h;
     var label = el('div', 'label', c);
     label.textContent = item.title;
-    el('span', null, label).textContent = item.sold ? 'продано' : money(item.price);
+    el('span', null, label).textContent = item.sold ? 'продано' : money(item);
     c.addEventListener('click', function () { location.hash = item.id; });
-    if (three && window.view3d) window.view3d.hover(c, item);
+    if (three && window.view3d) { window.view3d.still(c, item); window.view3d.hover(c, item); }
   }
   function page() {
     items.slice(shown, shown + PAGE).forEach(cell);
@@ -38,9 +47,10 @@
     var close = el('button', 'close', view); close.textContent = 'закрити';
     close.addEventListener('click', function () { location.hash = ''; });
     el('h2', null, info).textContent = item.title;
-    el('div', 'price', info).textContent = item.sold ? 'продано' : money(item.price);
+    el('div', 'price', info).textContent = item.sold ? 'продано' : money(item);
     if (item.text) el('p', null, info).textContent = item.text;
-    var link = item.pay || (pay ? pay + (pay.indexOf('?') < 0 ? '?' : '&') + 'a=' + item.price + '&t=' + encodeURIComponent(item.title) : '');
+    var link = item.pay || (pay ? pay + (pay.indexOf('?') < 0 ? '?' : '&') +                 /* the jar takes hryvnias only */
+      ((item.currency || 'грн') === 'грн' ? 'a=' + item.price + '&' : '') + 't=' + encodeURIComponent(item.title) : '');
     if (!item.sold && link) { var a = el('a', null, info); a.href = link; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'купити →'; }
 
     var big = el('img', 'photo', stage), solid = null, thumbs = el('div', 'thumbs', stage);
@@ -55,11 +65,8 @@
       if (path) { t.src = path; t.alt = ''; } else t.textContent = label;
       t.addEventListener('click', function () { pick(k); });
     }
-    if (three && window.view3d) {
-      solid = el('div', 'solid-box', stage);
-      thumb(-1, null, '3D');
-      item.photos.forEach(function (p, k) { thumb(k, src(p, 's')); });
-    } else if (item.photos.length > 1) item.photos.forEach(function (p, k) { thumb(k, src(p, 's')); });
+    if (three && window.view3d) solid = el('div', 'solid-box', stage);   /* the solid alone, no photos */
+    else if (item.photos.length > 1) item.photos.forEach(function (p, k) { thumb(k, src(p, 's')); });
     view.classList.add('on');                                     /* shown first: the solid measures the stage */
     document.documentElement.style.overflow = 'hidden';
     if (solid) { window.view3d.stage(solid, item); pick(-1); } else pick(0);

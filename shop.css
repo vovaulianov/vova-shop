@@ -11,17 +11,24 @@ img { display: block; }
 .top h1 { margin: 0; font: inherit; }
 .top p { margin: 0; color: #9a9a9a; }
 
-/* The grid: square cells, the thing in the middle at its own proportions; name and price under it on hover. */
-.grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 32px 24px; padding: 32px 32px 96px 264px; }
-.cell { position: relative; text-align: center; cursor: pointer; }
-.cell .pic { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; }
-.cell img { max-width: 82%; max-height: 82%; width: auto; height: auto; }
-.cell .label { margin-top: 8px; visibility: hidden; }
+/* The grid is a shelf: things stand on a line, each as big as its size says (--u is a size of 1, a small toy),
+   in its photo's proportions; name and price under it on hover. */
+.grid { --u: 150px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 88px 56px; padding: 32px 48px 120px 264px; }
+.cell { position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer;
+        width: calc(var(--u) * var(--s) * var(--fw)); }
+.cell .pic { position: relative; width: 100%; height: calc(var(--u) * var(--s) * var(--fh)); display: flex; align-items: flex-end; justify-content: center; }
+.cell img { width: 100%; height: 100%; object-fit: contain; object-position: bottom; transform: translateY(calc(var(--pb) * 100%)); }
+.three .cell img { transform: none; }
+.cell .label { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 12px; width: max-content; max-width: 220px; text-align: center; visibility: hidden; }
 .cell .label span { display: block; color: #9a9a9a; }
 .cell:hover .label { visibility: visible; }
 .cell.sold img { opacity: .3; }
 .cell.sold .label { visibility: visible; color: #9a9a9a; }
 .more { height: 1px; }
+/* The 3D version: a little roomier, for the shadow. */
+.three .cell { width: calc(var(--u) * var(--s) * var(--fw) * 1.2); }
+.three .cell .pic { height: calc(var(--u) * var(--s) * var(--fh) * 1.1); }
+.three .cell .live { top: auto; }
 
 /* An item, over the grid. */
 .item { position: fixed; inset: 0; z-index: 3; background: #fff; display: none; overflow-y: auto; }
@@ -39,8 +46,7 @@ img { display: block; }
 
 /* The 3D version: one live canvas takes the place of the photo under the pointer; on a thing's page the solid
    fills the stage and turns by dragging. */
-.cell .pic { position: relative; }
-.cell .live { position: absolute; inset: 0; margin: auto; }
+.cell .live { position: absolute; inset: 0; }
 .cell.live-on .pic img { visibility: hidden; }
 .item .solid-box { position: absolute; inset: 0; cursor: grab; }
 .item .solid-box:active { cursor: grabbing; }
@@ -50,7 +56,7 @@ img { display: block; }
 .item .thumbs { z-index: 1; }
 
 @media (max-width: 1023px) {
-  .grid { grid-template-columns: repeat(4, 1fr); padding: 96px 24px 96px; }
+  .grid { --u: 110px; gap: 48px 40px; padding: 104px 32px 96px; }
   .top { position: absolute; top: 24px; left: 24px; }
   .item.on { display: block; }
   .item .stage { height: 70vh; height: 70svh; }
@@ -60,7 +66,7 @@ img { display: block; }
   .item .close { top: 24px; right: 24px; }
 }
 @media (max-width: 599px) {
-  .grid { grid-template-columns: repeat(3, 1fr); gap: 16px 8px; padding: 88px 16px 64px; }
+  .grid { --u: 70px; gap: 32px 24px; padding: 96px 16px 64px; justify-content: center; }
   .top { left: 16px; }
   .cell .label { display: none; }
   .cell.sold .label { display: block; font-size: 12px; }
