@@ -12,11 +12,14 @@
   var PAGE = 30;
 
   function el(tag, cls, parent) { var e = document.createElement(tag); if (cls) e.className = cls; if (parent) parent.appendChild(e); return e; }
-  function money(item) {
-    var n = String(item.price).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
-    return item.currency === '$' ? '$' + n : n + '\u00A0' + (item.currency || 'грн');
-  }
   function src(p, size) { return root + p[size]; }
+  /* A price sticker, like the green ones from a price gun on old American shelves. */
+  function tag(item, parent, tilt) {
+    var t = el('span', 'tag' + (item.sold ? ' sold' : ''), parent);
+    t.textContent = item.sold ? 'продано' : item.currency === '$' ? '$' + item.price : item.price + ' ' + (item.currency || 'грн');
+    if (tilt) t.style.transform = 'rotate(' + tilt.toFixed(1) + 'deg)';
+    return t;
+  }
 
   function cell(item) {
     var c = el('div', 'cell' + (item.sold ? ' sold' : ''), grid);
@@ -31,7 +34,7 @@
     img.width = item.photos[0].w; img.height = item.photos[0].h;
     var label = el('div', 'label', c);
     label.textContent = item.title;
-    el('span', null, label).textContent = item.sold ? 'продано' : money(item);
+    tag(item, pic, (rand(item.id + 'tag')() - 0.5) * 16);         /* the price sticker, stuck on the thing */
     c.addEventListener('click', function () { location.hash = item.id; });
     if (three && window.view3d) { window.view3d.still(c, item); window.view3d.hover(c, item); }
   }
@@ -89,7 +92,7 @@
     var close = el('button', 'close', view); close.textContent = 'закрити';
     close.addEventListener('click', function () { location.hash = ''; });
     el('h2', null, info).textContent = item.title;
-    el('div', 'price', info).textContent = item.sold ? 'продано' : money(item);
+    tag(item, el('div', 'price', info), -4);
     if (item.text) el('p', null, info).textContent = item.text;
     var link = item.pay || (pay ? pay + (pay.indexOf('?') < 0 ? '?' : '&') +                 /* the jar takes hryvnias only */
       ((item.currency || 'грн') === 'грн' ? 'a=' + item.price + '&' : '') + 't=' + encodeURIComponent(item.title) : '');

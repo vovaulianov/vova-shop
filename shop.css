@@ -21,6 +21,7 @@ img { display: block; }
 .three .cell img { transform: none; }
 .cell .label { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 12px; width: max-content; max-width: 220px; text-align: center; visibility: hidden; }
 .cell .label span { display: block; color: #9a9a9a; }
+.cell .pic .tag { pointer-events: none; }
 .cell:hover .label { visibility: visible; }
 .cell.sold img { opacity: .3; }
 .cell.sold .label { visibility: visible; color: #9a9a9a; }
@@ -28,6 +29,15 @@ img { display: block; }
 /* The 3D version: a little roomier, for the shadow. */
 .three .cell { width: calc(var(--u) * var(--s) * var(--fw)); }
 .three .cell .pic { height: calc(var(--u) * var(--s) * var(--fh)); }
+
+/* The price sticker: fluorescent green, cut a little crooked, the price stamped on it in a price gun's type. */
+.tag { position: absolute; right: 4%; bottom: 10%; z-index: 2; display: inline-block; padding: 4px 7px 3px;
+       background: #a6f07c; color: #10260a; border-radius: 2px; font: 600 13px/1 "SF Mono", ui-monospace, Menlo, monospace;
+       letter-spacing: .04em; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.18);
+       background-image: linear-gradient(rgba(255,255,255,.25), rgba(255,255,255,0) 60%); }
+.tag.sold { background: #d8d8d8; color: #555; }
+.item .info .price { margin: 10px 0 20px; }
+.item .info .price .tag { position: static; font-size: 15px; padding: 5px 9px 4px; }
 
 /* An item, over the grid. */
 .item { position: fixed; inset: 0; z-index: 3; background: #fff; display: none; overflow-y: auto; }
