@@ -29,14 +29,13 @@ img { display: block; }
 .three .cell { width: calc(var(--u) * var(--s) * var(--fw)); }
 .three .cell .pic { height: calc(var(--u) * var(--s) * var(--fh)); }
 
-/* The price sticker, as from a price gun: a yellow label, the price stamped on it in grey. Two shapes to choose
-   from (?tag=a / ?tag=b): a: straight ends with a round bite top and bottom; b: wavy ends with little notches. */
+/* The price sticker, as from a price gun: a yellow label, the price stamped on it in grey; straight ends and
+   a round bite top and bottom (the user picked this over wavy ends). */
 .tag { position: relative; z-index: 0; isolation: isolate; display: inline-block; margin-top: 6px;
        padding: 7px 14px 6px; color: #4a4636; font: 500 14px/1 "SF Mono", ui-monospace, Menlo, monospace;
        letter-spacing: .08em; white-space: nowrap; }
 .tag::before { content: ''; position: absolute; inset: 0; z-index: -1; background: #f4d63a;
        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 56' preserveAspectRatio='none'%3E%3Cpath d='M3 2H33A7 7 0 0 0 47 2H117Q118 2 118 3V53Q118 54 117 54H47A7 7 0 0 0 33 54H3Q2 54 2 53V3Q2 2 3 2Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 56' preserveAspectRatio='none'%3E%3Cpath d='M3 2H35A5 5 0 0 0 45 2H117Q118 2 118 3V53Q118 54 117 54H45A5 5 0 0 0 35 54H3Q2 54 2 53V3Q2 2 3 2Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
-[data-tag="b"] .tag::before { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 56' preserveAspectRatio='none'%3E%3Cpath d='M14 2H20L22 10L24 2H96L98 10L100 2H106Q118 2 116 14Q112 28 116 42Q118 54 106 54H100L98 46L96 54H24L22 46L20 54H14Q2 54 4 42Q8 28 4 14Q2 2 14 2Z'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 56' preserveAspectRatio='none'%3E%3Cpath d='M14 2H20L22 10L24 2H96L98 10L100 2H106Q118 2 116 14Q112 28 116 42Q118 54 106 54H100L98 46L96 54H24L22 46L20 54H14Q2 54 4 42Q8 28 4 14Q2 2 14 2Z'/%3E%3C/svg%3E"); }
 .tag.sold::before { background: #d8d8d8; }
 .tag.sold { color: #666; }
 .cell .label .tag { display: table; margin: 6px auto 0; color: #4a4636; }
