@@ -220,7 +220,7 @@ function fit(inner) {                                    // centred, and every t
 /* Looks to choose from (?look=… shows one): how the studio is lit, and a finishing touch on the picture. */
 export const LOOKS = {
   now:  { key: 1.3, hemi: 0.45, env: 0.55, filter: '' },
-  soft: { key: 0.75, hemi: 0.9, env: 0.75, filter: 'contrast(.86) saturate(.86) blur(.25px)' },
+  soft: { key: 0.75, hemi: 0.9, env: 0.75, filter: 'contrast(.86) saturate(.86)' },   // no blur: on a turned still it smeared
   film: { key: 0.9, hemi: 0.75, env: 0.6, filter: 'contrast(.8) saturate(.7) sepia(.18) brightness(1.04) blur(.3px)' },
   airy: { key: 0.55, hemi: 1.05, env: 0.9, filter: 'contrast(.7) brightness(1.12) saturate(.75) blur(.2px)' },
 };
