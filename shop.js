@@ -17,7 +17,7 @@
   function tag(item, parent, tilt) {
     var t = el('span', 'tag' + (item.sold ? ' sold' : ''), parent);
     t.textContent = item.sold ? 'продано' : item.currency === '$' ? '$' + item.price : item.price + ' ' + (item.currency || 'грн');
-    if (tilt) t.style.transform = 'rotate(' + tilt.toFixed(1) + 'deg)';
+    if (tilt) t.style.setProperty('--tilt', tilt.toFixed(1) + 'deg');   /* only the paper tilts: turned text renders blurry */
     return t;
   }
 
