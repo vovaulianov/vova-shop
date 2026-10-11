@@ -206,7 +206,7 @@ function stageScene() {
   key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 6; key.shadow.camera.near = 0.5; key.shadow.camera.far = 8;
   Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3 });   /* wide: the shadow never meets an edge */
   scene.add(key, new THREE.HemisphereLight(0xffffff, 0xe8e4de, 0.9));
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.ShadowMaterial({ opacity: 0.14 }));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.ShadowMaterial({ opacity: 0.14 }));
   ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
   scene.add(ground);
   scene.userData.ground = ground;
@@ -216,7 +216,7 @@ function stageScene() {
 function renderer(canvas) {
   const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   r.setPixelRatio(Math.min(2, devicePixelRatio));
-  r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.0;
+  r.toneMapping = THREE.NeutralToneMapping; r.toneMappingExposure = 1.0;   /* keeps the colours of the thing true */
   r.outputColorSpace = THREE.SRGBColorSpace;
   r.shadowMap.enabled = true; r.shadowMap.type = THREE.VSMShadowMap;
   const pm = new THREE.PMREMGenerator(r);
