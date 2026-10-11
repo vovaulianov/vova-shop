@@ -244,10 +244,12 @@ function shared() {
   grid = { canvas, r, scene, cam: new THREE.PerspectiveCamera(22, 1, 0.1, 30), cell: null, ry: 0, loop: null, queue: Promise.resolve() };
   return grid;
 }
-function frame(g, group, w, h) {                         // the camera so the thing fills its box, shadow included
+const ROOM = 3.2;                                        // the render is 3.2× the box: the shadow fits at any turn
+function frame(g, group, w, h, room = 1) {               // the camera so the thing fills w/room × h/room
+  const fw = w / room, fh = h / room;
   const box = new THREE.Box3().setFromObject(group), sz = box.getSize(new THREE.Vector3());
   const across = Math.max(sz.x, sz.z) * 1.08, tall = group.userData.height * 1.12, half = Math.tan(THREE.MathUtils.degToRad(11));
-  const dist = Math.max(tall / 2 / half, across / 2 / (half * w / h)) + Math.max(sz.x, sz.z) / 2;
+  const dist = Math.max(tall / 2 / half, across / 2 / (half * fw / fh)) * room + Math.max(sz.x, sz.z) / 2;
   g.cam.aspect = w / h; g.cam.updateProjectionMatrix();
   g.cam.position.set(0, group.userData.height * 0.5 + dist * 0.09, dist);
   g.cam.lookAt(0, group.userData.height * 0.44, 0);
@@ -264,30 +266,45 @@ export function still(cell, item) {                      // rendered once, when 
       const w = pic.clientWidth, h = pic.clientHeight;
       if (!w || !h) return;
       place(g.scene, group); group.rotation.set(0, 0, 0);
-      g.r.setPixelRatio(2.5);                             // sharp, also on a phone's screen
-      frame(g, group, w * 1.4, h * 1.4);
+      g.r.setPixelRatio(2);                               // sharp, also on a phone's screen
+      frame(g, group, w * ROOM, h * ROOM, ROOM);
       g.r.render(g.scene, g.cam);
       const cut = crop(g.canvas);                          // trimmed to the thing and its shadow: it stands on the shelf
       img.src = cut.url;
       cell._still = { W: g.canvas.width, H: g.canvas.height, ...cut };   // where the still sits in the full render
+      place2(img, cell._still, pic);
+      new ResizeObserver(() => place2(img, cell._still, pic)).observe(pic);
       g.r.setPixelRatio(Math.min(2, devicePixelRatio));
       cell.classList.add('solid-still');
     }).catch(() => {});
   }, { rootMargin: '600px' });
   seen.observe(cell);
 }
-function crop(canvas) {
+function crop(canvas) {                                  // trimmed to thing + shadow; the thing's own box kept too
   const c = document.createElement('canvas'); c.width = canvas.width; c.height = canvas.height;
   const g = c.getContext('2d'); g.drawImage(canvas, 0, 0);
   const d = g.getImageData(0, 0, c.width, c.height).data;
-  let x0 = c.width, y0 = c.height, x1 = 0, y1 = 0;
-  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 10) {
-    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+  let x0 = c.width, y0 = c.height, x1 = 0, y1 = 0, ox0 = c.width, oy0 = c.height, ox1 = 0, oy1 = 0;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+    const a = d[(y * c.width + x) * 4 + 3];
+    if (a > 10) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (a > 200) { if (x < ox0) ox0 = x; if (x > ox1) ox1 = x; if (y < oy0) oy0 = y; if (y > oy1) oy1 = y; }
   }
   if (x1 <= x0) { x0 = y0 = 0; x1 = c.width - 1; y1 = c.height - 1; }
+  if (ox1 <= ox0) { ox0 = x0; oy0 = y0; ox1 = x1; oy1 = y1; }
   const o = document.createElement('canvas'); o.width = x1 - x0 + 1; o.height = y1 - y0 + 1;
   o.getContext('2d').drawImage(c, x0, y0, o.width, o.height, 0, 0, o.width, o.height);
-  return { url: o.toDataURL('image/png'), x0, y0, cw: o.width, ch: o.height };
+  return { url: o.toDataURL('image/png'), x0, y0, cw: o.width, ch: o.height, ox0, oy0, ow: ox1 - ox0 + 1, oh: oy1 - oy0 + 1 };
+}
+/* Where a still (or the live canvas, which is the same render) goes: the thing itself fills the box and stands on
+   its bottom edge; the shadow is free to spill out of it. */
+function fitStill(st, pic) {
+  const k = Math.min(pic.clientWidth / st.ow, pic.clientHeight / st.oh);
+  return { k, left: (pic.clientWidth - st.ow * k) / 2 - (st.ox0 - st.x0) * k, top: pic.clientHeight - (st.oy0 - st.y0 + st.oh) * k };
+}
+export function place2(img, st, pic) {
+  const f = fitStill(st, pic);
+  Object.assign(img.style, { position: 'absolute', width: st.cw * f.k + 'px', height: st.ch * f.k + 'px', left: f.left + 'px', top: f.top + 'px', transform: 'none' });
 }
 export function hover(cell, item) {
   const g = shared();
@@ -298,12 +315,11 @@ export function hover(cell, item) {
     if (g.cell !== cell) return;
     const pic = cell.querySelector('.pic'), st = cell._still;
     place(g.scene, group);
-    frame(g, group, pic.clientWidth * 1.4, pic.clientHeight * 1.4);     // the same camera as the still
+    frame(g, group, pic.clientWidth * ROOM, pic.clientHeight * ROOM, ROOM);   // the same camera as the still
     if (st) {                                             // and the same place and scale: no jump when it starts
-      const k = Math.min(pic.clientWidth / st.cw, pic.clientHeight / st.ch);
-      const left = (pic.clientWidth - st.cw * k) / 2, top = pic.clientHeight - st.ch * k;
-      Object.assign(g.canvas.style, { width: st.W * k + 'px', height: st.H * k + 'px',
-        left: left - st.x0 * k + 'px', top: top - st.y0 * k + 'px' });
+      const f = fitStill(st, pic);
+      Object.assign(g.canvas.style, { width: st.W * f.k + 'px', height: st.H * f.k + 'px',
+        left: f.left - st.x0 * f.k + 'px', top: f.top - st.y0 * f.k + 'px' });
     }
     pic.appendChild(g.canvas);
     cell.classList.add('live-on');
@@ -354,4 +370,73 @@ export async function stage(box, item) {
   let alive = true;
   (function tick() { if (!alive || !canvas.isConnected) { r.dispose(); return; } controls.update(); r.render(scene, cam); requestAnimationFrame(tick); })();
   return { stop() { alive = false; removeEventListener('resize', size); } };
+}
+
+/* ---------- the table: every thing lying on one white table, seen from above ---------- */
+export async function table(box, items, open) {
+  const canvas = document.createElement('canvas');
+  box.appendChild(canvas);
+  const r = renderer(canvas), scene = stageScene();
+  scene.environment = r.userData.env;
+  const key = scene.children.find(o => o.isDirectionalLight);
+  key.position.set(-1.5, 6, 2.5);
+  const tip = document.createElement('div'); tip.className = 'tip'; document.body.appendChild(tip);
+  const groups = await Promise.all(items.map(i => model(i)));
+  // laid in rows, each at its real size (`size`), its long side across, with air between
+  const W = 7.5, gap = 0.55, things = [];
+  let x = 0, z = 0, rowDepth = 0;
+  groups.forEach((g, k) => {
+    const s = items[k].size || 1, thing = g.clone();
+    thing.scale.multiplyScalar(s);
+    thing.rotation.x = -Math.PI / 2;                       // lying on its back, face up
+    const bb = new THREE.Box3().setFromObject(thing), sz = bb.getSize(new THREE.Vector3());
+    if (x > 0 && x + sz.x > W) { x = 0; z += rowDepth + gap; rowDepth = 0; }
+    thing.position.set(x + sz.x / 2 - W / 2, -bb.min.y + 0.002, z + sz.z / 2);
+    thing.userData = { ...thing.userData, item: items[k], rest: thing.position.y, thing: true };
+    // a little turned, as if put down by hand
+    thing.rotation.z = ((k * 7919) % 13 - 6) * 0.025;
+    scene.add(thing); things.push(thing);
+    x += sz.x + gap; rowDepth = Math.max(rowDepth, sz.z);
+  });
+  const depth = z + rowDepth;
+  scene.userData.ground.position.set(0, 0, depth / 2);
+  const cam = new THREE.PerspectiveCamera(26, 1, 0.1, 100);
+  function size() {
+    const w = box.clientWidth, h = Math.max(innerHeight, w * (depth + 2) / (W + 2));
+    r.setSize(w, h, false); canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    cam.aspect = w / h; cam.updateProjectionMatrix();
+    const fit = Math.max((W + 1.2) / (2 * Math.tan(THREE.MathUtils.degToRad(13)) * cam.aspect), (depth + 1.6) / (2 * Math.tan(THREE.MathUtils.degToRad(13))));
+    cam.position.set(0, fit * 0.97, depth / 2 + fit * 0.24);   // from above, leaning back a touch
+    cam.lookAt(0, 0, depth / 2);
+  }
+  size(); addEventListener('resize', size);
+  const ray = new THREE.Raycaster(), p = new THREE.Vector2();
+  let hovered = null;
+  canvas.addEventListener('pointermove', e => {
+    const rc = canvas.getBoundingClientRect();
+    p.set((e.clientX - rc.left) / rc.width * 2 - 1, -((e.clientY - rc.top) / rc.height) * 2 + 1);
+    ray.setFromCamera(p, cam);
+    const hit = ray.intersectObjects(things, true)[0];
+    let t = hit ? hit.object : null; while (t && !t.userData.item) t = t.parent;
+    hovered = t;
+    canvas.style.cursor = t ? 'pointer' : '';
+    if (t) {
+      const it = t.userData.item;
+      tip.innerHTML = ''; tip.textContent = it.title;
+      const sp = document.createElement('span');
+      sp.textContent = it.sold ? 'продано' : (it.currency === '$' ? '$' + it.price : String(it.price).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' грн');
+      tip.appendChild(sp);
+      tip.style.left = e.clientX + 'px'; tip.style.top = e.clientY + 'px'; tip.style.display = '';
+    } else tip.style.display = 'none';
+  });
+  canvas.addEventListener('pointerleave', () => { hovered = null; tip.style.display = 'none'; });
+  canvas.addEventListener('click', () => { if (hovered) open(hovered.userData.item.id); });
+  (function tick() {
+    things.forEach(t => {                                  // the one under the pointer lifts off the table a little
+      const want = t.userData.rest + (t === hovered ? 0.12 : 0);
+      t.position.y += (want - t.position.y) * 0.18;
+    });
+    r.render(scene, cam);
+    requestAnimationFrame(tick);
+  })();
 }

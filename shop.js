@@ -6,6 +6,7 @@
 (function () {
   var root = document.body.dataset.root || '';
   var three = document.body.classList.contains('three');
+  var layout = document.body.dataset.layout || 'shelf';            /* shelf, chaos, one or table */
   var grid = document.querySelector('.grid'), more = document.querySelector('.more');
   var items = [], shown = 0, pay = '';
   var PAGE = 30;
@@ -19,6 +20,7 @@
 
   function cell(item) {
     var c = el('div', 'cell' + (item.sold ? ' sold' : ''), grid);
+    c.dataset.id = item.id;
     var p0 = item.photos[0], long = Math.max(p0.w, p0.h);
     c.style.setProperty('--s', item.size || 1);                   /* the box: its size, the photo's proportions */
     c.style.setProperty('--fw', (p0.w / long).toFixed(3));
@@ -34,8 +36,33 @@
     if (three && window.view3d) { window.view3d.still(c, item); window.view3d.hover(c, item); }
   }
   function page() {
+    if (layout === 'table') { window.view3d.table(grid, items, function (id) { location.hash = id; }); shown = items.length; return; }
     items.slice(shown, shown + PAGE).forEach(cell);
     shown = Math.min(items.length, shown + PAGE);
+    if (layout === 'chaos') scatter();
+  }
+
+  /* Chaos: things dropped on the floor. Each lands where its id sends it (the same place every visit), turned a
+     little, not on top of another; the floor grows as more come. */
+  var placed = [];
+  function rand(seed) { var x = 0; for (var i = 0; i < seed.length; i++) x = (x * 31 + seed.charCodeAt(i)) | 0;
+    return function () { x = (x * 1103515245 + 12345) | 0; return ((x >>> 8) & 0xffff) / 0xffff; }; }
+  function scatter() {
+    var W = grid.clientWidth, cells = [].slice.call(grid.children).filter(function (c) { return !c.dataset.placed; });
+    cells.forEach(function (c, i) {
+      var r = rand(c.dataset.id), w = c.offsetWidth, h = c.offsetHeight + 40, best = null;
+      for (var t = 0; t < 300 && !best; t++) {
+        var x = r() * Math.max(1, W - w), y = r() * (Math.max(600, placed.reduce(function (m, p) { return Math.max(m, p.y + p.h); }, 0)) + 200 * (t / 60));
+        var free = placed.every(function (p) { return x + w + 40 < p.x || p.x + p.w + 40 < x || y + h + 40 < p.y || p.y + p.h + 40 < y; });
+        if (free) best = { x: x, y: y, w: w, h: h };
+      }
+      best = best || { x: 0, y: placed.reduce(function (m, p) { return Math.max(m, p.y + p.h + 40); }, 0), w: w, h: h };
+      placed.push(best);
+      c.dataset.placed = 1;
+      c.style.left = best.x + 'px'; c.style.top = best.y + 'px';
+      c.style.transform = 'rotate(' + ((r() - 0.5) * 22).toFixed(1) + 'deg)';
+    });
+    grid.style.height = placed.reduce(function (m, p) { return Math.max(m, p.y + p.h); }, 0) + 120 + 'px';
   }
   new IntersectionObserver(function (e) { if (e[0].isIntersecting && shown < items.length) page(); }, { rootMargin: '800px' }).observe(more);
 
@@ -86,5 +113,11 @@
       var n = items.filter(function (i) { return !i.sold; }).length, d = n % 10, h = n % 100;
       document.querySelector('.top p').textContent = n + (d === 1 && h !== 11 ? ' річ' : d >= 2 && d <= 4 && (h < 12 || h > 14) ? ' речі' : ' речей');
       page(); route();
+      var nav = el('nav', 'layouts', document.querySelector('.top'));              /* for now: to compare layouts */
+      [['', 'полиця'], ['chaos/', 'хаос'], ['one/', 'по одній'], ['table/', 'стіл']].forEach(function (l) {
+        if (!three) return;
+        var a = el('a', null, nav); a.href = root + '3d/' + l[0]; a.textContent = l[1];
+        if ((l[0] || 'shelf/').indexOf(layout) === 0) a.className = 'on';
+      });
     });
 })();

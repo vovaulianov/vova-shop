@@ -26,8 +26,8 @@ img { display: block; }
 .cell.sold .label { visibility: visible; color: #9a9a9a; }
 .more { height: 1px; }
 /* The 3D version: a little roomier, for the shadow. */
-.three .cell { width: calc(var(--u) * var(--s) * var(--fw) * 1.2); }
-.three .cell .pic { height: calc(var(--u) * var(--s) * var(--fh) * 1.1); }
+.three .cell { width: calc(var(--u) * var(--s) * var(--fw)); }
+.three .cell .pic { height: calc(var(--u) * var(--s) * var(--fh)); }
 
 /* An item, over the grid. */
 .item { position: fixed; inset: 0; z-index: 3; background: #fff; display: none; overflow-y: auto; }
@@ -45,7 +45,7 @@ img { display: block; }
 
 /* The 3D version: one live canvas takes the place of the photo under the pointer; on a thing's page the solid
    fills the stage and turns by dragging. */
-.cell .live { position: absolute; pointer-events: none; }
+.cell .live { position: absolute; pointer-events: none; z-index: 1; }
 .cell.live-on .pic img { visibility: hidden; }
 .item .solid-box { position: absolute; inset: 0; cursor: grab; }
 .item .solid-box:active { cursor: grabbing; }
@@ -53,6 +53,24 @@ img { display: block; }
 .item .thumbs span { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; opacity: .35; cursor: pointer; }
 .item .thumbs span.on { opacity: 1; }
 .item .thumbs { z-index: 1; }
+
+/* Layouts to compare (3d/, 3d/chaos/, 3d/one/, 3d/table/) */
+.top .layouts { margin-top: 20px; display: flex; flex-direction: column; }
+.top .layouts a { text-decoration: none; color: #9a9a9a; }
+.top .layouts a.on { color: #000; }
+.chaos .grid { display: block; position: relative; }
+.chaos .cell { position: absolute; }
+.chaos .cell .label { visibility: hidden; }
+.chaos .cell:hover { z-index: 2; }
+.one .grid { display: block; padding: 0 48px 0 34vw; }
+.one .cell { width: auto; height: 100vh; height: 100svh; justify-content: center; }
+.one .cell .pic { width: min(50vw, calc(64vh * var(--fw) / var(--fh))); height: auto; aspect-ratio: calc(var(--fw) / var(--fh)); }
+.one .cell .label { position: static; transform: none; margin-top: 28px; visibility: visible; }
+.one .top { top: 33.3333vh; }
+.table .grid { display: block; padding: 0; }
+.table .grid canvas { display: block; }
+.table .tip { position: fixed; z-index: 3; pointer-events: none; text-align: center; transform: translate(-50%, 24px); }
+.table .tip span { display: block; color: #9a9a9a; }
 
 @media (max-width: 1023px) {
   .grid { --u: 110px; gap: 48px 40px; padding: 104px 32px 96px; }
@@ -65,6 +83,9 @@ img { display: block; }
   .item .close { top: 24px; right: 24px; }
 }
 @media (max-width: 599px) {
+  .one .grid { padding: 0 16px; }
+  .one .cell .pic { width: min(84vw, calc(56svh * var(--fw) / var(--fh))); }
+  .one .top { position: absolute; top: 24px; }
   .grid { --u: 70px; gap: 32px 24px; padding: 96px 16px 64px; justify-content: center; }
   .top { left: 16px; }
   .cell .label { display: none; }
