@@ -1,5 +1,29 @@
 [
  {
+  "id": "test-prybraty",
+  "title": "тест — прибрати",
+  "price": 1,
+  "text": "",
+  "photos": [
+   {
+    "s": "img/test-prybraty-1-s.webp",
+    "l": "img/test-prybraty-1-l.webp",
+    "w": 743,
+    "h": 1086
+   },
+   {
+    "s": "img/test-prybraty-2-s.webp",
+    "l": "img/test-prybraty-2-l.webp",
+    "w": 1129,
+    "h": 1210
+   }
+  ],
+  "back": 1,
+  "pay": "",
+  "sold": false,
+  "added": "2026-10-11"
+ },
+ {
   "id": "kloun-tiahuchka",
   "title": "клоун-тягучка",
   "price": 300,
