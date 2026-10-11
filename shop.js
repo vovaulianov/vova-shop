@@ -6,6 +6,7 @@
 (function () {
   var root = document.body.dataset.root || '';
   var three = document.body.classList.contains('three');
+  document.body.dataset.tag = new URLSearchParams(location.search).get('tag') || 'a';   /* the sticker's shape: a or b */
   var layout = document.body.dataset.layout || 'shelf';            /* shelf (photos), chaos (home) or one (kept aside) */
   var grid = document.querySelector('.grid'), more = document.querySelector('.more');
   var items = [], shown = 0, pay = '';
@@ -34,7 +35,7 @@
     img.width = item.photos[0].w; img.height = item.photos[0].h;
     var label = el('div', 'label', c);
     label.textContent = item.title;
-    tag(item, pic, (rand(item.id + 'tag')() - 0.5) * 16);         /* the price sticker, stuck on the thing */
+    tag(item, label, (rand(item.id + 'tag')() - 0.5) * 6);         /* the price sticker, under the name */
     c.addEventListener('click', function () { location.hash = item.id; });
     if (three && window.view3d) { window.view3d.still(c, item); window.view3d.hover(c, item); }
   }
