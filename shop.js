@@ -89,7 +89,7 @@
   function open(item) {
     view.innerHTML = '';
     var stage = el('div', 'stage', view), info = el('div', 'info', view);
-    var close = el('button', 'close', view); close.textContent = 'закрити';
+    var close = el('button', 'close', view); close.textContent = 'назад';
     close.addEventListener('click', function () { location.hash = ''; });
     el('h2', null, info).textContent = item.title;
     tag(item, el('div', 'price', info), -4);
