@@ -1,0 +1,104 @@
+[
+ {
+  "id": "kloun-tiahuchka",
+  "title": "клоун-тягучка",
+  "price": 300,
+  "text": "тягнеться майже на метр і повертається назад. трохи страшний, дуже смішний",
+  "photos": [
+   {
+    "s": "img/kloun-tiahuchka-1-s.webp",
+    "l": "img/kloun-tiahuchka-1-l.webp",
+    "w": 743,
+    "h": 1086
+   },
+   {
+    "s": "img/kloun-tiahuchka-2-s.webp",
+    "l": "img/kloun-tiahuchka-2-l.webp",
+    "w": 1129,
+    "h": 1210
+   }
+  ],
+  "back": 1,
+  "pay": "",
+  "sold": false,
+  "added": "2026-10-11"
+ },
+ {
+  "id": "nintendo-switch-animal-crossing-edition",
+  "title": "nintendo switch animal crossing edition",
+  "price": 9000,
+  "text": "консоль, док-станція, два джойкони з ремінцями і тримач для них. усе працює",
+  "photos": [
+   {
+    "s": "img/nintendo-switch-animal-crossing-edition-1-s.webp",
+    "l": "img/nintendo-switch-animal-crossing-edition-1-l.webp",
+    "w": 2482,
+    "h": 1228
+   },
+   {
+    "s": "img/nintendo-switch-animal-crossing-edition-2-s.webp",
+    "l": "img/nintendo-switch-animal-crossing-edition-2-l.webp",
+    "w": 2589,
+    "h": 1373
+   },
+   {
+    "s": "img/nintendo-switch-animal-crossing-edition-3-s.webp",
+    "l": "img/nintendo-switch-animal-crossing-edition-3-l.webp",
+    "w": 2633,
+    "h": 1488
+   },
+   {
+    "s": "img/nintendo-switch-animal-crossing-edition-4-s.webp",
+    "l": "img/nintendo-switch-animal-crossing-edition-4-l.webp",
+    "w": 2546,
+    "h": 1895
+   },
+   {
+    "s": "img/nintendo-switch-animal-crossing-edition-5-s.webp",
+    "l": "img/nintendo-switch-animal-crossing-edition-5-l.webp",
+    "w": 1728,
+    "h": 1423
+   },
+   {
+    "s": "img/nintendo-switch-animal-crossing-edition-6-s.webp",
+    "l": "img/nintendo-switch-animal-crossing-edition-6-l.webp",
+    "w": 705,
+    "h": 847
+   },
+   {
+    "s": "img/nintendo-switch-animal-crossing-edition-7-s.webp",
+    "l": "img/nintendo-switch-animal-crossing-edition-7-l.webp",
+    "w": 787,
+    "h": 770
+   }
+  ],
+  "back": 1,
+  "pay": "",
+  "sold": false,
+  "added": "2026-10-11"
+ },
+ {
+  "id": "animal-crossing-new-horizons",
+  "title": "animal crossing: new horizons",
+  "price": 1200,
+  "text": "гра для nintendo switch, картридж у коробці. американське видання, англійською",
+  "photos": [
+   {
+    "s": "img/animal-crossing-new-horizons-1-s.webp",
+    "l": "img/animal-crossing-new-horizons-1-l.webp",
+    "w": 1516,
+    "h": 1906
+   },
+   {
+    "s": "img/animal-crossing-new-horizons-2-s.webp",
+    "l": "img/animal-crossing-new-horizons-2-l.webp",
+    "w": 1750,
+    "h": 2540
+   }
+  ],
+  "back": 1,
+  "pay": "",
+  "sold": false,
+  "added": "2026-10-11"
+ }
+]
