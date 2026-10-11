@@ -20,6 +20,26 @@ function texture(path) {
   }, undefined, fail));
 }
 
+/* The outline as a smooth curve: points spaced evenly round it, then each averaged with its neighbours, so
+   corners come out softly rounded (by about 1 % of the way round) instead of as joined straight pieces. */
+function smooth(pts, n = 480, sigma = 4) {
+  const P = pts.map(p => [p[0], p[1]]), L = [0];
+  for (let i = 1; i <= P.length; i++) { const a = P[i - 1], b = P[i % P.length]; L.push(L[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1])); }
+  const total = L[P.length], even = [];
+  for (let k = 0, j = 0; k < n; k++) {
+    const d = total * k / n; while (L[j + 1] < d) j++;
+    const a = P[j], b = P[(j + 1) % P.length], t = (d - L[j]) / Math.max(1e-9, L[j + 1] - L[j]);
+    even.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+  }
+  const w = []; for (let k = -3 * sigma; k <= 3 * sigma; k++) w.push(Math.exp(-k * k / (2 * sigma * sigma)));
+  const W = w.reduce((x, y) => x + y);
+  return even.map((_, i) => {
+    let x = 0, y = 0;
+    w.forEach((wk, k) => { const q = even[(i + k - 3 * sigma + n) % n]; x += q[0] * wk; y += q[1] * wk; });
+    return [x / W, y / W];
+  });
+}
+
 function bbox(pts) {
   const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
   return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
@@ -43,7 +63,7 @@ function edgeColour(img, outline) {                      // the average colour j
    so the edge is as clean as the cut-out. */
 function relief(front, back, ft, bt) {
   const aspect = front.h / front.w, fb = bbox(front.outline);
-  const img = ft.image, R = 320;
+  const img = ft.image, R = 420;
   const W = Math.round(R * (fb.x1 - fb.x0) / Math.max(fb.x1 - fb.x0, (fb.y1 - fb.y0) * aspect));
   const H = Math.round(R * (fb.y1 - fb.y0) * aspect / Math.max(fb.x1 - fb.x0, (fb.y1 - fb.y0) * aspect));
   const c = document.createElement('canvas'); c.width = W + 1; c.height = H + 1;
@@ -63,7 +83,7 @@ function relief(front, back, ft, bt) {
     if (x === W || y === H) { d[i] = 1; continue; }
     d[i] = Math.min(d[i], d[at(x + 1, y)] + 1, d[at(x, y + 1)] + 1, d[at(x + 1, y + 1)] + 1.414, x > 0 ? d[at(x - 1, y + 1)] + 1.414 : 1e9);
   }
-  for (let pass = 0; pass < 3; pass++) {                 // smoothed, so the surface has no steps
+  for (let pass = 0; pass < 5; pass++) {                 // smoothed, so the surface has no steps
     const e = d.slice();
     for (let y = 1; y < H; y++) for (let x = 1; x < W; x++) {
       const i = at(x, y); if (!inside[i]) continue;
@@ -134,20 +154,20 @@ export async function model(item) {
     const [ft, bt] = await Promise.all([texture(front.l), back ? texture(back.l) : null]);
     if (!front.flat) return fit(relief(front, back, ft, bt));
     const aspect = front.h / front.w;                    // shape units: the photo is 1 wide, `aspect` tall
-    const pts = front.outline.map(([x, y]) => new THREE.Vector2(x, (1 - y) * aspect));
+    const pts = smooth(front.outline.map(([x, y]) => [x, y * aspect])).map(([x, y]) => new THREE.Vector2(x, aspect - y));
     const shape = new THREE.Shape(pts);
     const fb = bbox(front.outline), size = Math.min(fb.x1 - fb.x0, (fb.y1 - fb.y0) * aspect);
     const flat = front.flat;
     const depth = flat ? size * 0.07 : size * 0.22;
-    const bevel = flat ? size * 0.006 : size * 0.09;
+    const bevel = flat ? size * 0.016 : size * 0.09;   /* flat things get soft, rounded edges */
     const uv = {                                          // the photo printed on the caps, the sides plain
       generateTopUV: (g, v, a, b, c) => [a, b, c].map(i => new THREE.Vector2(v[i * 3], v[i * 3 + 1] / aspect)),
       generateSideWallUV: (g, v, a, b, c, d) => [a, b, c, d].map(() => new THREE.Vector2(0, 0)),
     };
     const geo = new THREE.ExtrudeGeometry(shape, {
       depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel * (flat ? 1 : 0.6), bevelOffset: -bevel * (flat ? 1 : 0.6),
-      bevelSegments: flat ? 2 : 8,   /* the rounding goes inwards: the outline stays the photo's */
-      curveSegments: 4, UVGenerator: uv,
+      bevelSegments: 8,   /* the rounding goes inwards: the outline stays the photo's */
+      curveSegments: 12, UVGenerator: uv,
     });
     // the caps come as one group: split them into front (towards the camera) and back
     const idx = geo.index ? geo.index.array : null, pos = geo.attributes.position;
@@ -204,7 +224,7 @@ export const LOOKS = {
   film: { key: 0.9, hemi: 0.75, env: 0.6, filter: 'contrast(.8) saturate(.7) sepia(.18) brightness(1.04) blur(.3px)' },
   airy: { key: 0.55, hemi: 1.05, env: 0.9, filter: 'contrast(.7) brightness(1.12) saturate(.75) blur(.2px)' },
 };
-const look = LOOKS[new URLSearchParams(location.search).get('look')] || LOOKS.now;
+const look = LOOKS[new URLSearchParams(location.search).get('look')] || LOOKS.soft;   // «б, мʼяко», the user's choice
 if (look.filter) {
   const st = document.createElement('style');
   st.textContent = '.cell .pic img, .cell .pic canvas, .item .solid-box canvas { filter: ' + look.filter + '; }';
