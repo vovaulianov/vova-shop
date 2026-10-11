@@ -63,7 +63,7 @@ function edgeColour(img, outline) {                      // the average colour j
    so the edge is as clean as the cut-out. */
 function relief(front, back, ft, bt) {
   const aspect = front.h / front.w, fb = bbox(front.outline);
-  const img = ft.image, R = 420;
+  const img = ft.image, R = 480;
   const W = Math.round(R * (fb.x1 - fb.x0) / Math.max(fb.x1 - fb.x0, (fb.y1 - fb.y0) * aspect));
   const H = Math.round(R * (fb.y1 - fb.y0) * aspect / Math.max(fb.x1 - fb.x0, (fb.y1 - fb.y0) * aspect));
   const c = document.createElement('canvas'); c.width = W + 1; c.height = H + 1;
@@ -83,7 +83,7 @@ function relief(front, back, ft, bt) {
     if (x === W || y === H) { d[i] = 1; continue; }
     d[i] = Math.min(d[i], d[at(x + 1, y)] + 1, d[at(x, y + 1)] + 1, d[at(x + 1, y + 1)] + 1.414, x > 0 ? d[at(x - 1, y + 1)] + 1.414 : 1e9);
   }
-  for (let pass = 0; pass < 5; pass++) {                 // smoothed, so the surface has no steps
+  for (let pass = 0; pass < 14; pass++) {                // smoothed a lot: no steps, no creases down the middle
     const e = d.slice();
     for (let y = 1; y < H; y++) for (let x = 1; x < W; x++) {
       const i = at(x, y); if (!inside[i]) continue;
