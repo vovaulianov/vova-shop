@@ -201,11 +201,12 @@ function fit(inner) {                                    // centred, and every t
 
 function stageScene() {
   const scene = new THREE.Scene();
-  const key = new THREE.DirectionalLight(0xffffff, 2.2);
+  const key = new THREE.DirectionalLight(0xffffff, 1.3);
   key.position.set(1.2, 2.2, 2.4); key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 6; key.shadow.camera.near = 0.5; key.shadow.camera.far = 8;
+  key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0005; key.shadow.camera.near = 0.5; key.shadow.camera.far = 8;
   Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3 });   /* wide: the shadow never meets an edge */
-  scene.add(key, new THREE.HemisphereLight(0xffffff, 0xe8e4de, 0.9));
+  scene.add(key, new THREE.HemisphereLight(0xffffff, 0xe8e4de, 0.45));
+  scene.environmentIntensity = 0.55;                    /* light enough to read, not so much that colours wash out */
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.ShadowMaterial({ opacity: 0.14 }));
   ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
   scene.add(ground);
@@ -218,7 +219,7 @@ function renderer(canvas) {
   r.setPixelRatio(Math.min(2, devicePixelRatio));
   r.toneMapping = THREE.NeutralToneMapping; r.toneMappingExposure = 1.0;   /* keeps the colours of the thing true */
   r.outputColorSpace = THREE.SRGBColorSpace;
-  r.shadowMap.enabled = true; r.shadowMap.type = THREE.VSMShadowMap;
+  r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
   const pm = new THREE.PMREMGenerator(r);
   r.userData = { env: pm.fromScene(new RoomEnvironment(), 0.04).texture };
   return r;
