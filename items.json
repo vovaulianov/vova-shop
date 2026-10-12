@@ -3154,8 +3154,8 @@
   "pay": "",
   "sold": false,
   "added": "2026-10-12",
-  "kind": "round",
-  "depth": 0.6
+  "kind": "gadget",
+  "depth": 0.55
  },
  {
   "id": "kloun-tiahuchka",

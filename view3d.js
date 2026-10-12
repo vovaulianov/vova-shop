@@ -341,13 +341,234 @@ function stripColour(img, fb, side) {                    // the average colour o
   return n ? new THREE.Color(`rgb(${Math.round(r / n)},${Math.round(gg / n)},${Math.round(b / n)})`) : new THREE.Color(0x333333);
 }
 
+/* ---------- clean models for things a photo can't wrap well ---------- */
+
+/* The photo on a grid: which cells are the thing, and its colour there. */
+function grid(img, fb, aspect, res = 360) {
+  const bw = fb.x1 - fb.x0, bh = (fb.y1 - fb.y0) * aspect, k = res / Math.max(bw, bh);
+  const W = Math.max(8, Math.round(bw * k)), H = Math.max(8, Math.round(bh * k));
+  const c = document.createElement('canvas'); c.width = W + 1; c.height = H + 1;
+  const g = c.getContext('2d');
+  g.drawImage(img, fb.x0 * img.width, fb.y0 * img.height, (fb.x1 - fb.x0) * img.width, (fb.y1 - fb.y0) * img.height, 0, 0, W + 1, H + 1);
+  const px = g.getImageData(0, 0, W + 1, H + 1).data, n = (W + 1) * (H + 1), inside = new Uint8Array(n);
+  for (let i = 0; i < n; i++) inside[i] = px[i * 4 + 3] > 120 ? 1 : 0;
+  const at = (x, y) => y * (W + 1) + x;
+  return { W, H, n, inside, at, px, sx: bw / W, sy: bh / H,
+           X: x => fb.x0 + x * bw / W, Y: y => (1 - fb.y0) * aspect - y * bh / H };
+}
+
+function chamferIn(G, mask, f) {                         // distances inside mask, from where f is 0
+  const { W, H, at } = G;
+  for (let y = 0; y <= H; y++) for (let x = 0; x <= W; x++) {
+    const i = at(x, y); if (!mask[i] || f[i] === 0) continue;
+    let v = f[i];
+    if (x > 0) v = Math.min(v, f[at(x - 1, y)] + 1);
+    if (y > 0) { v = Math.min(v, f[at(x, y - 1)] + 1); if (x > 0) v = Math.min(v, f[at(x - 1, y - 1)] + 1.414); if (x < W) v = Math.min(v, f[at(x + 1, y - 1)] + 1.414); }
+    f[i] = v;
+  }
+  for (let y = H; y >= 0; y--) for (let x = W; x >= 0; x--) {
+    const i = at(x, y); if (!mask[i] || f[i] === 0) continue;
+    let v = f[i];
+    if (x < W) v = Math.min(v, f[at(x + 1, y)] + 1);
+    if (y < H) { v = Math.min(v, f[at(x, y + 1)] + 1); if (x < W) v = Math.min(v, f[at(x + 1, y + 1)] + 1.414); if (x > 0) v = Math.min(v, f[at(x - 1, y + 1)] + 1.414); }
+    f[i] = v;
+  }
+}
+
+/* A round bar (a handle, a spout, a strap) where mask is: depth √(d (d + 2a)), d to the edge, a to its middle line;
+   one smooth colour; front and back halves joined at the outline. */
+function bar(G, mask, colour) {
+  const { W, H, n, at } = G;
+  const de = new Float32Array(n), am = new Float32Array(n), d = new Float32Array(n);
+  for (let i = 0; i < n; i++) de[i] = mask[i] ? 1e9 : 0;
+  chamferIn(G, mask, de);
+  for (let y = 0; y <= H; y++) for (let x = 0; x <= W; x++) {
+    const i = at(x, y); if (!mask[i]) continue;
+    let ridge = de[i] > 1;
+    for (let dy = -1; dy <= 1 && ridge; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx > W || yy > H) continue;
+      if (de[at(xx, yy)] > de[i] + 1e-4) { ridge = false; break; }
+    }
+    am[i] = ridge ? 0 : 1e9;
+  }
+  chamferIn(G, mask, am);
+  for (let i = 0; i < n; i++) if (mask[i]) { const dd = Math.max(0, de[i] - 0.7), aa = Math.min(am[i], 3 * dd + 3); d[i] = Math.sqrt(dd * (dd + 2 * aa)); }
+  for (let pass = 0; pass < 14; pass++) {                // a smooth bar, not a lumpy one
+    const e = d.slice();
+    for (let y = 1; y < H; y++) for (let x = 1; x < W; x++) { const i = at(x, y); if (!mask[i]) continue;
+      e[i] = (d[i] * 4 + d[at(x - 1, y)] + d[at(x + 1, y)] + d[at(x, y - 1)] + d[at(x, y + 1)]) / 8; }
+    d.set(e);
+  }
+  const group = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color: colour, roughness: 0.6, side: THREE.DoubleSide });
+  [1, -1].forEach(side => {
+    const pos = [], idx = [];
+    for (let y = 0; y <= H; y++) for (let x = 0; x <= W; x++) pos.push(G.X(x), G.Y(y), side * d[at(x, y)] * G.sx);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const a = at(x, y), b = at(x + 1, y), c = at(x, y + 1), e = at(x + 1, y + 1);
+      if (!(mask[a] && mask[b] && mask[c] && mask[e])) continue;
+      if (side > 0) idx.push(a, c, b, b, c, e); else idx.push(a, b, c, b, e, c);
+    }
+    if (!idx.length) return;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+    group.add(new THREE.Mesh(geo, mat));
+  });
+  return group;
+}
+
+function bigParts(G, mask, minShare) {                   // only the parts of mask big enough to be real
+  const { W, H, n, at } = G, lab = new Int32Array(n), keep = new Uint8Array(n);
+  let total = 0; for (let i = 0; i < n; i++) total += G.inside[i];
+  let id = 0;
+  for (let s0 = 0; s0 < n; s0++) {
+    if (!mask[s0] || lab[s0]) continue;
+    id++; const stack = [s0], cells = []; lab[s0] = id;
+    while (stack.length) {
+      const i = stack.pop(); cells.push(i); const x = i % (W + 1), y = (i / (W + 1)) | 0;
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => { const xx = x + dx, yy = y + dy;
+        if (xx < 0 || yy < 0 || xx > W || yy > H) return; const j = at(xx, yy); if (mask[j] && !lab[j]) { lab[j] = id; stack.push(j); } });
+    }
+    if (cells.length > total * minShare) cells.forEach(i => { keep[i] = 1; });
+  }
+  return keep;
+}
+
+function medianColour(G, pick) {                         // the middle colour of the cells pick() chooses
+  const rs = [], gs = [], bs = [];
+  for (let y = 0; y <= G.H; y++) for (let x = 0; x <= G.W; x++) {
+    const i = G.at(x, y); if (!G.inside[i] || !pick(x, y)) continue;
+    rs.push(G.px[i * 4]); gs.push(G.px[i * 4 + 1]); bs.push(G.px[i * 4 + 2]);
+  }
+  const m = a => { if (!a.length) return 200; a.sort((p, q) => p - q); return a[a.length >> 1]; };
+  return new THREE.Color(`rgb(${m(rs)},${m(gs)},${m(bs)})`);
+}
+
+/* Turned (a kettle, a jezve): a smooth body of revolution round an upright axis, coloured row by row with the
+   colour at the middle of the body in the photo (where the light is even: no photo shadows stretched round), and
+   whatever sticks out of it (a handle, a spout) as a round bar in its own colour. */
+function turnedModel(front, ft, aspect) {
+  const fb = bbox(front.outline), G = grid(ft.image, fb, aspect, 360), { W, H, at, inside } = G;
+  const col = new Float32Array(W + 1);
+  for (let y = 0; y <= H; y++) for (let x = 0; x <= W; x++) col[x] += inside[at(x, y)];
+  const top = Math.max(...col); let sxs = 0, sn = 0;
+  for (let x = 0; x <= W; x++) if (col[x] > top * 0.8) { sxs += x; sn++; }
+  const c = sxs / sn, ci = Math.round(c), R = new Float32Array(H + 1);
+  for (let y = 0; y <= H; y++) {
+    if (!inside[at(ci, y)]) continue;
+    let l = ci, r = ci; while (l > 0 && inside[at(l - 1, y)]) l--; while (r < W && inside[at(r + 1, y)]) r++;
+    R[y] = Math.min(c - l, r - c) + 0.5;
+  }
+  const raw = R.slice();
+  for (let pass = 0; pass < 80; pass++) { const e = R.slice(); for (let y = 1; y < H; y++) if (raw[y] && raw[y - 1] && raw[y + 1]) e[y] = (R[y - 1] + 2 * R[y] + R[y + 1]) / 4; R.set(e); }
+  const rows = []; for (let y = 0; y <= H; y++) if (R[y] > 1) rows.push(y);
+  // colour per row, from the middle third of the body; then smoothed down the rows, keeping real changes
+  const colours = rows.map(y => {
+    const rs = [], gs = [], bs = [];
+    for (let x = Math.round(c - R[y] * 0.35); x <= Math.round(c + R[y] * 0.35); x++) {
+      const i = at(x, y); if (!inside[i]) continue; rs.push(G.px[i * 4]); gs.push(G.px[i * 4 + 1]); bs.push(G.px[i * 4 + 2]);
+    }
+    const m = a => { if (!a.length) return 200; a.sort((p, q) => p - q); return a[a.length >> 1]; };
+    return [m(rs), m(gs), m(bs)];
+  });
+  for (let pass = 0; pass < 30; pass++) {               // smooth: no bands, but a real change (a lid, a base) stays
+    const e = colours.map(v => v.slice());
+    for (let k = 1; k < colours.length - 1; k++) for (let ch = 0; ch < 3; ch++) e[k][ch] = (colours[k - 1][ch] + 2 * colours[k][ch] + colours[k + 1][ch]) / 4;
+    colours.splice(0, colours.length, ...e);
+  }
+  const N = 72, pos = [], cols = [], idx = [];
+  rows.forEach((y, r) => {
+    const [cr, cg, cb] = colours[r].map(v => Math.pow(v / 255, 2.2));   // linear, as the renderer expects
+    for (let k = 0; k <= N; k++) {
+      const th = 2 * Math.PI * k / N;
+      pos.push(G.X(c + R[y] * Math.sin(th)), G.Y(y), R[y] * G.sx * Math.cos(th));
+      cols.push(cr, cg, cb);
+    }
+  });
+  for (let r = 0; r < rows.length - 1; r++) {
+    if (rows[r + 1] - rows[r] > 2) continue;
+    for (let k = 0; k < N; k++) { const a = r * (N + 1) + k, b = a + 1, c2 = a + N + 1, d2 = c2 + 1; idx.push(a, c2, b, b, c2, d2); }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  geo.setIndex(idx); geo.computeVertexNormals();
+  const group = new THREE.Group();
+  group.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, side: THREE.DoubleSide })));
+  [[rows[0], 0], [rows[rows.length - 1], colours.length - 1]].forEach(([y, k]) => {
+    const cap = new THREE.Mesh(new THREE.CircleGeometry(R[y] * G.sx, N),
+      new THREE.MeshStandardMaterial({ color: new THREE.Color(`rgb(${colours[k].map(Math.round).join(',')})`), roughness: 0.6, side: THREE.DoubleSide }));
+    cap.rotation.x = -Math.PI / 2; cap.position.set(G.X(c), G.Y(y), 0); group.add(cap);
+  });
+  const rest = new Uint8Array(G.n);                      // what sticks out of the body
+  for (let y = 0; y <= H; y++) for (let x = 0; x <= W; x++) { const i = at(x, y); rest[i] = inside[i] && !(R[y] && Math.abs(x - c) <= R[y] * 1.06 + 2) ? 1 : 0; }
+  const parts = bigParts(G, rest, 0.012);                 // slivers along the body (the photo's perspective) go
+  group.add(bar(G, parts, medianColour(G, (x, y) => parts[at(x, y)])));
+  return group;
+}
+
+/* A gadget (a camera): a rounded box, the photo of its face on the front and of its back on the back, the sides
+   in its colour; a strap or a cord (what's thin and sticks out) as a round bar. */
+function gadgetModel(front, back, ft, bt, aspect, depthShare) {
+  const fb = bbox(front.outline), G = grid(ft.image, fb, aspect, 360), { W, H, at, inside, n } = G;
+  const de = new Float32Array(n); for (let i = 0; i < n; i++) de[i] = inside[i] ? 1e9 : 0;
+  chamferIn(G, inside, de);
+  const k = Math.max(W, H) * 0.06;                       // thicker than a strap: the body
+  let x0 = W, y0 = H, x1 = 0, y1 = 0;
+  for (let y = 0; y <= H; y++) for (let x = 0; x <= W; x++) if (de[at(x, y)] > k) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  x0 = Math.max(0, x0 - k); y0 = Math.max(0, y0 - k); x1 = Math.min(W, x1 + k); y1 = Math.min(H, y1 + k);
+  const bx0 = G.X(x0), bx1 = G.X(x1), by0 = G.Y(y1), by1 = G.Y(y0);       // the body in shape units
+  const bwid = bx1 - bx0, bhei = by1 - by0, long = Math.max(bwid, bhei);
+  const depth = long * depthShare, rad = Math.min(bwid, bhei) * 0.12, bev = long * 0.04;
+  const shape = roundRect(bx0, by0, bx1, by1, rad);
+  const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: bev, bevelSize: bev, bevelOffset: -bev,
+    bevelSegments: 8, curveSegments: 16,
+    UVGenerator: { generateTopUV: (g, v, a, b, c) => [a, b, c].map(i => new THREE.Vector2(v[i * 3], v[i * 3 + 1] / aspect)),
+                   generateSideWallUV: (g, v, a, b, c, d) => [a, b, c, d].map(() => new THREE.Vector2(0, 0)) } });
+  const idx = geo.index ? geo.index.array : null, at2 = i => idx ? idx[i] : i;
+  const pos = geo.attributes.position, frontT = [], backT = [], sideT = [];
+  for (let i = geo.groups[0].start; i < geo.groups[0].start + geo.groups[0].count; i += 3) {
+    const t = [at2(i), at2(i + 1), at2(i + 2)], z = (pos.getZ(t[0]) + pos.getZ(t[1]) + pos.getZ(t[2])) / 3;
+    (z > depth / 2 ? frontT : backT).push(...t);
+  }
+  for (let i = geo.groups[1].start; i < geo.groups[1].start + geo.groups[1].count; i++) sideT.push(at2(i));
+  geo.setIndex([...frontT, ...backT, ...sideT]); geo.clearGroups();
+  geo.addGroup(0, frontT.length, 0); geo.addGroup(frontT.length, backT.length, 1); geo.addGroup(frontT.length + backT.length, sideT.length, 2);
+  if (bt && back) {                                      // the back photo's own body, mirrored onto the back face
+    const bb = bbox(back.outline), ba = back.h / back.w, GB = grid(bt.image, bb, ba, 360);
+    const dB = new Float32Array(GB.n); for (let i = 0; i < GB.n; i++) dB[i] = GB.inside[i] ? 1e9 : 0;
+    chamferIn(GB, GB.inside, dB);
+    const kb = Math.max(GB.W, GB.H) * 0.06; let u0 = GB.W, v0 = GB.H, u1 = 0, v1 = 0;
+    for (let y = 0; y <= GB.H; y++) for (let x = 0; x <= GB.W; x++) if (dB[GB.at(x, y)] > kb) { u0 = Math.min(u0, x); u1 = Math.max(u1, x); v0 = Math.min(v0, y); v1 = Math.max(v1, y); }
+    u0 = Math.max(0, u0 - kb); v0 = Math.max(0, v0 - kb); u1 = Math.min(GB.W, u1 + kb); v1 = Math.min(GB.H, v1 + kb);
+    const uvs = geo.attributes.uv;
+    backT.forEach(i => {
+      const s = (pos.getX(i) - bx0) / bwid, t = (pos.getY(i) - by0) / bhei;
+      const px = u1 - s * (u1 - u0), py = v1 - t * (v1 - v0);     // mirrored left-right
+      uvs.setXY(i, bb.x0 + px / GB.W * (bb.x1 - bb.x0), 1 - (bb.y0 + py / GB.H * (bb.y1 - bb.y0)));
+    });
+  }
+  geo.computeVertexNormals();
+  const bodyCol = medianColour(G, (x, y) => x > x0 + (x1 - x0) * 0.1 && x < x1 - (x1 - x0) * 0.1 && y > y0 + (y1 - y0) * 0.75 && y < y1 - 2);
+  const mats = [new THREE.MeshStandardMaterial({ map: ft, roughness: 0.5 }),
+                bt ? new THREE.MeshStandardMaterial({ map: bt, roughness: 0.5 }) : new THREE.MeshStandardMaterial({ color: bodyCol }),
+                new THREE.MeshStandardMaterial({ color: bodyCol, roughness: 0.5 })];
+  const group = new THREE.Group(); const body = new THREE.Mesh(geo, mats); body.position.z = -depth / 2; group.add(body);
+  const rest = new Uint8Array(n);
+  for (let y = 0; y <= H; y++) for (let x = 0; x <= W; x++) { const i = at(x, y); rest[i] = inside[i] && (x < x0 - 1 || x > x1 + 1 || y < y0 - 1 || y > y1 + 1) ? 1 : 0; }
+  const strap = bigParts(G, rest, 0.004);
+  group.add(bar(G, strap, medianColour(G, (x, y) => strap[at(x, y)])));
+  return group;
+}
+
 export async function model(item) {
   if (models.has(item.id)) return models.get(item.id);
   const job = (async () => {
     const front = item.photos[0], back = item.back != null ? item.photos[item.back] : null;
     const [ft, bt] = await Promise.all([texture(front.l), back ? texture(back.l) : null]);
     const kindName = item.kind || (front.flat ? 'case' : 'round');
-    if (kindName === 'round' || kindName === 'lathe') return fit(relief(front, back, ft, bt, item.depth || 0.8, kindName === 'lathe'));
+    if (kindName === 'lathe') return fit(turnedModel(front, ft, front.h / front.w));
+    if (kindName === 'gadget') return fit(gadgetModel(front, back, ft, bt, front.h / front.w, item.depth || 0.5));
+    if (kindName === 'round') return fit(relief(front, back, ft, bt, item.depth || 0.8));
     const kind = KINDS[kindName] || KINDS.case;
     const aspect = front.h / front.w;                    // shape units: the photo is 1 wide, `aspect` tall
     const pts = smooth(front.outline.map(([x, y]) => [x, y * aspect])).map(([x, y]) => new THREE.Vector2(x, aspect - y));
