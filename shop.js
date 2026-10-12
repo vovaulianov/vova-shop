@@ -39,6 +39,11 @@
     if (three && window.view3d) { window.view3d.still(c, item); window.view3d.hover(c, item); }
   }
   function page() {
+    if (layout === 'chaos' && !shown) {                         /* real proportions: the biggest thing fits the screen */
+      var big = items.reduce(function (m, i) { return Math.max(m, i.size || 1); }, 1);
+      var cs = getComputedStyle(grid), room = grid.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      grid.style.setProperty('--u', Math.max(26, Math.min(room * 0.8 / big, innerHeight * 0.78 / big, 130)) + 'px');
+    }
     items.slice(shown, shown + PAGE).forEach(cell);
     shown = Math.min(items.length, shown + PAGE);
     if (layout === 'chaos') scatter();
@@ -54,33 +59,46 @@
     if (layout !== 'chaos' || Math.abs(grid.clientWidth - scatteredAt) < 40) return;
     clearTimeout(scatter.t);
     scatter.t = setTimeout(function () {
-      placed = [];
+      placed = []; shown = shown;
+      var big = items.reduce(function (m, i) { return Math.max(m, i.size || 1); }, 1);
+      var cs = getComputedStyle(grid), room = grid.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      grid.style.setProperty('--u', Math.max(26, Math.min(room * 0.8 / big, innerHeight * 0.78 / big, 130)) + 'px');
       [].forEach.call(grid.children, function (c) { delete c.dataset.placed; });
       scatter();
     }, 150);
   });
+  /* Dropped one after another, like things tipped out onto a floor: each one tries many spots across the width,
+     falls as far up as it can without touching anything (a gap all round, and room under it for its name and
+     price sticker), and the highest few spots win, with a little luck, so the page has a loose rhythm rather than
+     rows. Turned a little, counting the corners the turn sticks out. */
   function scatter() {
     var W = scatteredAt = grid.clientWidth, cells = [].slice.call(grid.children).filter(function (c) { return !c.dataset.placed; });
     var cs = getComputedStyle(grid), pl = parseFloat(cs.paddingLeft), pr = parseFloat(cs.paddingRight), pt = parseFloat(cs.paddingTop);
     W -= pl + pr;                                           /* the floor is inside the padding (the title's column) */
-    var edge = Math.max(24, W * 0.07), gap = Math.max(24, W * 0.04);   /* room at the sides for turning, shadows */
+    var edge = Math.max(16, W * 0.04), gap = Math.max(22, W * 0.03), under = 58;
+    var last = null;
     cells.forEach(function (c) {
-      var r = rand(c.dataset.id), w = c.offsetWidth, h = c.querySelector('.pic').offsetHeight, best = null;
-      var floor = placed.reduce(function (m, p) { return Math.max(m, p.y + p.h); }, 0);
-      for (var t = 0; t < 900; t++) {                      /* many tries; a high one wins, but not always the highest */
-        var x = edge + r() * Math.max(1, W - w - 2 * edge), y = r() * (floor + h * 0.8);
-        var free = placed.every(function (p) { return x + w + gap < p.x || p.x + p.w + gap < x || y + h + gap * 1.3 < p.y || p.y + p.h + gap * 1.3 < y; });
-        var score = y + r() * h * 0.35;
-        if (free && (!best || score < best.score)) best = { x: x, y: y, w: w, h: h, score: score };
+      var r = rand(c.dataset.id), turn = (r() - 0.5) * 14, rad = Math.abs(turn) * Math.PI / 180;
+      var w0 = c.offsetWidth, h0 = c.querySelector('.pic').offsetHeight;
+      var w = w0 * Math.cos(rad) + h0 * Math.sin(rad), h = h0 * Math.cos(rad) + w0 * Math.sin(rad);
+      var best = null;
+      for (var t = 0; t < 48; t++) {
+        var x = edge + (t + r()) / 48 * Math.max(1, W - w - 2 * edge);
+        var y = 0;
+        placed.forEach(function (p) { if (x < p.x + p.w + gap && p.x < x + w + gap) y = Math.max(y, p.y + p.h + under + gap); });
+        var lift = r() * h * 0.35;                           /* not every one falls all the way: rhythm */
+        var score = y + lift + (last && Math.abs(x - last.x) < w * 0.4 ? h * 0.5 : 0);
+        if (!best || score < best.score) best = { x: x, y: y, w: w, h: h, score: score };
       }
-      best = best || { x: edge, y: floor + gap * 2.5, w: w, h: h };
-      placed.push(best);
+      best.y += r() * gap;
+      placed.push(best); last = best;
       c.dataset.placed = 1;
-      c.style.left = pl + best.x + 'px'; c.style.top = pt + best.y + 'px';
-      c.querySelector('.pic').style.transform = 'rotate(' + ((r() - 0.5) * 22).toFixed(1) + 'deg)';   /* the thing turned, its name not */
+      c.style.left = pl + best.x + (w - w0) / 2 + 'px'; c.style.top = pt + best.y + (h - h0) / 2 + 'px';
+      c.querySelector('.pic').style.transform = 'rotate(' + turn.toFixed(1) + 'deg)';   /* the thing turned, its name not */
     });
-    grid.style.height = pt + placed.reduce(function (m, p) { return Math.max(m, p.y + p.h); }, 0) + 120 + 'px';
+    grid.style.height = pt + placed.reduce(function (m, p) { return Math.max(m, p.y + p.h + under); }, 0) + 120 + 'px';
   }
+
 
   new IntersectionObserver(function (e) { if (e[0].isIntersecting && shown < items.length) page(); }, { rootMargin: '800px' }).observe(more);
 
@@ -128,6 +146,11 @@
                fetch(root + 'shop.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).catch(function () { return {}; })])
     .then(function (r) {
       items = r[0]; pay = (r[1] && r[1].pay) || '';
+      if (layout === 'chaos') {                                /* a rhythm: one big thing, then two small ones by it */
+        var bySize = items.slice().sort(function (a, b) { return (b.size || 1) - (a.size || 1); }), mixed = [];
+        while (bySize.length) { mixed.push(bySize.shift()); if (bySize.length) mixed.push(bySize.pop()); if (bySize.length > 2) mixed.push(bySize.pop()); }
+        items = mixed;
+      }
       var n = items.filter(function (i) { return !i.sold; }).length, d = n % 10, h = n % 100;
       document.querySelector('.top p').textContent = n + (d === 1 && h !== 11 ? ' річ' : d >= 2 && d <= 4 && (h < 12 || h > 14) ? ' речі' : ' речей');
       page(); route();
