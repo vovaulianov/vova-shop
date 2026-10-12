@@ -16,7 +16,9 @@
   function shown_(item) {                                       /* on a phone sizes are eased (a painting 7 → 3.9,
                                                                    a record 3.15 → 2.2): small things aren't specks */
     var s = item.size || 1;
-    return innerWidth < 600 ? Math.pow(s, 0.7) : s;
+    if (innerWidth >= 600) return s;
+    return s < 2.6 ? 0.25 + 0.08 * s : Math.min(0.88, 0.3 + 0.1 * s);   /* phone: its long side as a share of the width;
+                                                                         small things small enough to go in pairs */
   }
   /* A price sticker, like the green ones from a price gun on old American shelves. */
   function tag(item, parent, tilt) {
@@ -47,7 +49,7 @@
     if (layout === 'chaos' && !shown) {                         /* real proportions: the biggest thing fits the screen */
       var big = items.reduce(function (m, i) { return Math.max(m, shown_(i)); }, 1);
       var cs = getComputedStyle(grid), room = grid.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      grid.style.setProperty('--u', Math.max(26, Math.min(room * 0.8 / big, innerHeight * 0.78 / big, 130)) + 'px');
+      grid.style.setProperty('--u', (innerWidth < 600 ? room : Math.max(26, Math.min(room * 0.8 / big, innerHeight * 0.78 / big, 130))) + 'px');
     }
     items.slice(shown, shown + PAGE).forEach(cell);
     shown = Math.min(items.length, shown + PAGE);
@@ -67,7 +69,7 @@
       placed = []; shown = shown;
       var big = items.reduce(function (m, i) { return Math.max(m, shown_(i)); }, 1);
       var cs = getComputedStyle(grid), room = grid.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      grid.style.setProperty('--u', Math.max(26, Math.min(room * 0.8 / big, innerHeight * 0.78 / big, 130)) + 'px');
+      grid.style.setProperty('--u', (innerWidth < 600 ? room : Math.max(26, Math.min(room * 0.8 / big, innerHeight * 0.78 / big, 130))) + 'px');
       [].forEach.call(grid.children, function (c) { delete c.dataset.placed; });
       scatter();
     }, 150);
@@ -76,12 +78,39 @@
      falls as far up as it can without touching anything (a gap all round, and room under it for its name and
      price sticker), and the highest few spots win, with a little luck, so the page has a loose rhythm rather than
      rows. Turned a little, counting the corners the turn sticks out. */
+  /* On a phone: one thing to a row, big, set to the left, the right or the middle in turn, a little off; two
+     small things share a row, one a little higher than the other. */
+  var phoneY = 0, phoneK = 0;
+  function flow(cells, W, pl, pt, under) {
+    var gap = 28, i = 0;
+    function size(c) { var w0 = c.offsetWidth, h0 = c.querySelector('.pic').offsetHeight; return { w0: w0, h0: h0 }; }
+    function put(c, x, y, turn) {
+      c.dataset.placed = 1; c.style.left = pl + x + 'px'; c.style.top = pt + y + 'px';
+      c.querySelector('.pic').style.transform = 'rotate(' + turn.toFixed(1) + 'deg)';
+    }
+    if (!placed.length) { phoneY = 8; phoneK = 0; }
+    while (i < cells.length) {
+      var a = cells[i], r = rand(a.dataset.id), A = size(a), b = cells[i + 1], B = b ? size(b) : null;
+      if (B && A.w0 + B.w0 + gap * 1.2 <= W) {             // a pair
+        var free = W - A.w0 - B.w0, xa = free * (0.05 + r() * 0.2), xb = W - B.w0 - free * (0.05 + r() * 0.2);
+        var lift = (r() - 0.5) * 0.5, ya = phoneY + Math.max(0, lift) * A.h0, yb = phoneY + Math.max(0, -lift) * B.h0;
+        put(a, xa, ya, (r() - 0.5) * 8); put(b, xb, yb, (r() - 0.5) * 8);
+        phoneY = Math.max(ya + A.h0, yb + B.h0) + under + gap; placed.push({}, {}); i += 2;
+      } else {                                            // alone: left, right, middle in turn
+        var spare = Math.max(0, W - A.w0), at = [0.12, 0.88, 0.5][phoneK++ % 3];
+        put(a, Math.min(spare, Math.max(0, spare * (at + (r() - 0.5) * 0.16))), phoneY, (r() - 0.5) * 7);
+        phoneY += A.h0 + under + gap; placed.push({}); i += 1;
+      }
+    }
+    grid.style.height = pt + phoneY + 80 + 'px';
+  }
   function scatter() {
     var W = scatteredAt = grid.clientWidth, cells = [].slice.call(grid.children).filter(function (c) { return !c.dataset.placed; });
     var cs = getComputedStyle(grid), pl = parseFloat(cs.paddingLeft), pr = parseFloat(cs.paddingRight), pt = parseFloat(cs.paddingTop);
     W -= pl + pr;                                           /* the floor is inside the padding (the title's column) */
     var edge = Math.max(16, W * 0.04), gap = Math.max(22, W * 0.03), under = 58;
     var last = null;
+    if (W < 600) return flow(cells, W, pl, pt, under);
     cells.forEach(function (c) {
       var r = rand(c.dataset.id), turn = (r() - 0.5) * 14, rad = Math.abs(turn) * Math.PI / 180;
       var w0 = c.offsetWidth, h0 = c.querySelector('.pic').offsetHeight;
