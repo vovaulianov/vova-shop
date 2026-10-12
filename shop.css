@@ -10,6 +10,7 @@ img { display: block; }
 .top { position: fixed; top: 32px; left: 32px; z-index: 2; }
 .top h1 { margin: 0; font: inherit; }
 .top p { margin: 0; color: #9a9a9a; }
+.top p.note { margin-top: 16px; color: #000; max-width: 200px; }
 
 /* The grid is a shelf: things stand on a line, each as big as its size says (--u is a size of 1, a small toy),
    in its photo's proportions; name and price under it on hover. */
@@ -109,7 +110,7 @@ img { display: block; }
 .one .grid { padding: 0 16px; }
   .one .cell .pic { width: min(84vw, calc(56svh * var(--fw) / var(--fh))); }
   .one .top { position: absolute; top: 24px; }
-  .grid { --u: 70px; gap: 32px 24px; padding: 96px 16px 64px; justify-content: center; }
+  .grid { --u: 70px; gap: 32px 24px; padding: 150px 16px 64px; justify-content: center; }
   .top { left: 16px; }
   .item .close { left: 16px; }
   .cell .label { display: none; }
