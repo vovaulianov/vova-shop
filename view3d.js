@@ -715,7 +715,32 @@ function frame(g, group, w, h, room = 1) {               // the camera so the th
   g.r.setSize(w, h, false);
   g.canvas.style.width = w + 'px'; g.canvas.style.height = h + 'px';
 }
+/* A still baked ahead (by the back room, see tools/bake.html): the picture is a progressive JPEG on white, so the
+   grid shows the finished look at once, sharpening as it loads; st says where it sits in the full render. */
+export function baked(cell, item) {
+  const pic = cell.querySelector('.pic'), img = pic.querySelector('img'), st = item.still;
+  cell._still = st;
+  img.src = root + st.src; img.removeAttribute('width'); img.removeAttribute('height');
+  place2(img, st, pic);
+  new ResizeObserver(() => place2(img, st, pic)).observe(pic);
+  cell.classList.add('solid-still');
+}
+
+/* For the back room: the still of a thing whose box is w × h (its photo's proportions), as a PNG with the render's
+   numbers. */
+export async function bake(item, w, h) {
+  const g = shared('stills');
+  const group = await model(item);
+  place(g.scene, group); group.rotation.set(0, 0, 0);
+  g.r.setPixelRatio(1);
+  frame(g, group, w * ROOM, h * ROOM, ROOM);
+  g.r.render(g.scene, g.cam);
+  const cut = crop(g.canvas);
+  return { W: g.canvas.width, H: g.canvas.height, ...cut };
+}
+
 export function still(cell, item) {                      // rendered once, when the cell comes near the screen
+  if (item.still) return baked(cell, item);
   const seen = new IntersectionObserver(es => {
     if (!es[0].isIntersecting) return;
     seen.disconnect();

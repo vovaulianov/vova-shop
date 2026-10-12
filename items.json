@@ -130,7 +130,20 @@
   "added": "2026-10-12",
   "kind": "book",
   "depth": 0.12,
-  "turn": 90
+  "turn": 90,
+  "still": {
+   "W": 2444,
+   "H": 2800,
+   "x0": 900,
+   "y0": 967,
+   "cw": 645,
+   "ch": 749,
+   "ox0": 900,
+   "oy0": 967,
+   "ow": 645,
+   "oh": 748,
+   "src": "img/art-nouveau-still.jpg?1791834504"
+  }
  },
  {
   "id": "large-graphics",
@@ -267,7 +280,20 @@
   "added": "2026-10-12",
   "kind": "book",
   "depth": 0.08,
-  "turn": 90
+  "turn": 90,
+  "still": {
+   "W": 2329,
+   "H": 2758,
+   "x0": 859,
+   "y0": 952,
+   "cw": 612,
+   "ch": 737,
+   "ox0": 860,
+   "oy0": 953,
+   "ow": 610,
+   "oh": 735,
+   "src": "img/large-graphics-still.jpg?1791834504"
+  }
  },
  {
   "id": "lo-sport-nell-arte",
@@ -399,7 +425,20 @@
   "sold": false,
   "added": "2026-10-12",
   "kind": "book",
-  "depth": 0.09
+  "depth": 0.09,
+  "still": {
+   "W": 2374,
+   "H": 2633,
+   "x0": 873,
+   "y0": 909,
+   "cw": 628,
+   "ch": 702,
+   "ox0": 874,
+   "oy0": 910,
+   "ow": 626,
+   "oh": 701,
+   "src": "img/lo-sport-nell-arte-still.jpg?1791834504"
+  }
  },
  {
   "id": "kartyna-z-oblychchiam",
@@ -530,7 +569,20 @@
   "pay": "",
   "sold": false,
   "added": "2026-10-12",
-  "kind": "painting"
+  "kind": "painting",
+  "still": {
+   "W": 4160,
+   "H": 3238,
+   "x0": 1517,
+   "y0": 1125,
+   "cw": 1126,
+   "ch": 841,
+   "ox0": 1518,
+   "oy0": 1126,
+   "ow": 1124,
+   "oh": 839,
+   "src": "img/kartyna-z-oblychchiam-still.jpg?1791834505"
+  }
  },
  {
   "id": "batkivshchyna-maty",
@@ -661,7 +713,20 @@
   "pay": "",
   "sold": false,
   "added": "2026-10-12",
-  "kind": "painting"
+  "kind": "painting",
+  "still": {
+   "W": 2774,
+   "H": 3840,
+   "x0": 1030,
+   "y0": 1322,
+   "cw": 714,
+   "ch": 1029,
+   "ox0": 1030,
+   "oy0": 1323,
+   "ow": 714,
+   "oh": 1027,
+   "src": "img/batkivshchyna-maty-still.jpg?1791834505"
+  }
  },
  {
   "id": "kartyna-z-zhinkoiu",
@@ -792,7 +857,20 @@
   "pay": "",
   "sold": false,
   "added": "2026-10-12",
-  "kind": "painting"
+  "kind": "painting",
+  "still": {
+   "W": 3187,
+   "H": 4160,
+   "x0": 1180,
+   "y0": 1434,
+   "cw": 827,
+   "ch": 1112,
+   "ox0": 1181,
+   "oy0": 1435,
+   "ow": 825,
+   "oh": 1110,
+   "src": "img/kartyna-z-zhinkoiu-still.jpg?1791834505"
+  }
  },
  {
   "id": "eminem-the-eminem-show",
@@ -923,7 +1001,20 @@
   "pay": "",
   "sold": false,
   "added": "2026-10-12",
-  "kind": "vinyl"
+  "kind": "vinyl",
+  "still": {
+   "W": 2656,
+   "H": 2636,
+   "x0": 976,
+   "y0": 914,
+   "cw": 704,
+   "ch": 693,
+   "ox0": 976,
+   "oy0": 914,
+   "ow": 704,
+   "oh": 693,
+   "src": "img/eminem-the-eminem-show-still.jpg?1791834506"
+  }
  },
  {
   "id": "the-last-of-us-part-ii-soundtrack",
@@ -1054,7 +1145,20 @@
   "pay": "",
   "sold": false,
   "added": "2026-10-12",
-  "kind": "vinyl"
+  "kind": "vinyl",
+  "still": {
+   "W": 2656,
+   "H": 2640,
+   "x0": 976,
+   "y0": 916,
+   "cw": 704,
+   "ch": 694,
+   "ox0": 977,
+   "oy0": 916,
+   "ow": 702,
+   "oh": 694,
+   "src": "img/the-last-of-us-part-ii-soundtrack-still.jpg?1791834506"
+  }
  },
  {
   "id": "j-hann-j-hannsson-arrival",
@@ -1185,7 +1289,20 @@
   "pay": "",
   "sold": false,
   "added": "2026-10-12",
-  "kind": "vinyl"
+  "kind": "vinyl",
+  "still": {
+   "W": 2656,
+   "H": 2633,
+   "x0": 975,
+   "y0": 913,
+   "cw": 706,
+   "ch": 693,
+   "ox0": 976,
+   "oy0": 913,
+   "ow": 704,
+   "oh": 692,
+   "src": "img/j-hann-j-hannsson-arrival-still.jpg?1791834506"
+  }
  },
  {
   "id": "rupaul-ho-ho-ho",
@@ -1316,7 +1433,20 @@
   "pay": "",
   "sold": false,
   "added": "2026-10-12",
-  "kind": "vinyl"
+  "kind": "vinyl",
+  "still": {
+   "W": 2656,
+   "H": 2566,
+   "x0": 975,
+   "y0": 890,
+   "cw": 706,
+   "ch": 674,
+   "ox0": 976,
+   "oy0": 891,
+   "ow": 704,
+   "oh": 673,
+   "src": "img/rupaul-ho-ho-ho-still.jpg?1791834507"
+  }
  },
  {
   "id": "taylor-swift-the-tortured-poets-departme",
@@ -1447,7 +1577,20 @@
   "pay": "",
   "sold": false,
   "added": "2026-10-12",
-  "kind": "vinyl"
+  "kind": "vinyl",
+  "still": {
+   "W": 2656,
+   "H": 2624,
+   "x0": 975,
+   "y0": 910,
+   "cw": 706,
+   "ch": 690,
+   "ox0": 976,
+   "oy0": 911,
+   "ow": 704,
+   "oh": 689,
+   "src": "img/taylor-swift-the-tortured-poets-departme-still.jpg?1791834507"
+  }
  },
  {
   "id": "chainyk-hay",
@@ -1935,7 +2078,20 @@
   "sold": false,
   "added": "2026-10-12",
   "kind": "lathe",
-  "depth": 1.0
+  "depth": 1.0,
+  "still": {
+   "W": 1971,
+   "H": 2342,
+   "x0": 731,
+   "y0": 809,
+   "cw": 514,
+   "ch": 629,
+   "ox0": 732,
+   "oy0": 809,
+   "ow": 512,
+   "oh": 628,
+   "src": "img/chainyk-hay-still.jpg?1791834507"
+  }
  },
  {
   "id": "toster-hay",
@@ -2067,7 +2223,20 @@
   "sold": false,
   "added": "2026-10-12",
   "kind": "box",
-  "depth": 0.55
+  "depth": 0.55,
+  "still": {
+   "W": 2656,
+   "H": 1696,
+   "x0": 958,
+   "y0": 592,
+   "cw": 740,
+   "ch": 452,
+   "ox0": 959,
+   "oy0": 592,
+   "ow": 738,
+   "oh": 451,
+   "src": "img/toster-hay-still.jpg?1791834507"
+  }
  },
  {
   "id": "dzhezva",
@@ -2619,7 +2788,20 @@
   "sold": false,
   "added": "2026-10-12",
   "kind": "lathe",
-  "depth": 1.0
+  "depth": 1.0,
+  "still": {
+   "W": 2342,
+   "H": 1683,
+   "x0": 883,
+   "y0": 588,
+   "cw": 604,
+   "ch": 433,
+   "ox0": 884,
+   "oy0": 588,
+   "ow": 602,
+   "oh": 432,
+   "src": "img/dzhezva-still.jpg?1791834507"
+  }
  },
  {
   "id": "fujifilm-instax-mini-11",
@@ -3155,7 +3337,20 @@
   "sold": false,
   "added": "2026-10-12",
   "kind": "gadget",
-  "depth": 0.55
+  "depth": 0.55,
+  "still": {
+   "W": 2384,
+   "H": 2355,
+   "x0": 876,
+   "y0": 817,
+   "cw": 636,
+   "ch": 634,
+   "ox0": 877,
+   "oy0": 818,
+   "ow": 634,
+   "oh": 632,
+   "src": "img/fujifilm-instax-mini-11-still.jpg?1791834508"
+  }
  },
  {
   "id": "kloun-tiahuchka",
@@ -4015,7 +4210,20 @@
   "sold": false,
   "added": "2026-10-11",
   "kind": "round",
-  "depth": 0.62
+  "depth": 0.62,
+  "still": {
+   "W": 1398,
+   "H": 2051,
+   "x0": 523,
+   "y0": 706,
+   "cw": 353,
+   "ch": 549,
+   "ox0": 523,
+   "oy0": 706,
+   "ow": 353,
+   "oh": 549,
+   "src": "img/kloun-tiahuchka-still.jpg?1791834508"
+  }
  },
  {
   "id": "nintendo-switch-animal-crossing-edition",
@@ -5480,7 +5688,20 @@
   "pay": "",
   "sold": false,
   "added": "2026-10-11",
-  "kind": "device"
+  "kind": "device",
+  "still": {
+   "W": 2342,
+   "H": 1072,
+   "x0": 868,
+   "y0": 391,
+   "cw": 607,
+   "ch": 239,
+   "ox0": 868,
+   "oy0": 391,
+   "ow": 606,
+   "oh": 238,
+   "src": "img/nintendo-switch-animal-crossing-edition-still.jpg?1791834508"
+  }
  },
  {
   "id": "animal-crossing-new-horizons",
@@ -5611,6 +5832,19 @@
   "pay": "",
   "sold": false,
   "added": "2026-10-11",
-  "kind": "case"
+  "kind": "case",
+  "still": {
+   "W": 1548,
+   "H": 2051,
+   "x0": 573,
+   "y0": 706,
+   "cw": 403,
+   "ch": 551,
+   "ox0": 574,
+   "oy0": 707,
+   "ow": 401,
+   "oh": 549,
+   "src": "img/animal-crossing-new-horizons-still.jpg?1791834508"
+  }
  }
 ]

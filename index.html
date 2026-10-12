@@ -6,6 +6,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>вова продає</title>
 <meta name="description" content="речі, які я розпродую: книжки, картини, техніка, іграшки">
+<meta property="og:type" content="website">
+<meta property="og:title" content="вова продає">
+<meta property="og:description" content="речі, які я розпродую: книжки, картини, техніка, іграшки">
+<meta property="og:image" content="https://shop.vovaulianov.com/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://shop.vovaulianov.com/og.jpg">
 <link rel="icon" href="data:,">
 <link rel="preload" href="fonts/ABCAreal-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="shop.css?v=ef23d60d">
@@ -16,10 +24,11 @@
 <div class="more"></div>
 <section class="item"></section>
 <script type="importmap">{"imports": {"three": "./vendor/three.module.min.js"}}</script>
+<script src="shop.js?v=44c862be"></script>
 <script type="module">
-  import * as view3d from './view3d.js?v=78e8e3f6';
+  import * as view3d from './view3d.js?v=71f9f65b';
   window.view3d = view3d;
-  const s = document.createElement('script'); s.src = 'shop.js'; document.body.appendChild(s);
+  window.dispatchEvent(new Event('view3d'));
 </script>
 </body>
 </html>

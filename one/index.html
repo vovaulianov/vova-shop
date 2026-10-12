@@ -16,10 +16,11 @@
 <div class="more"></div>
 <section class="item"></section>
 <script type="importmap">{"imports": {"three": "../vendor/three.module.min.js"}}</script>
+<script src="../shop.js?v=44c862be"></script>
 <script type="module">
-  import * as view3d from '../view3d.js?v=78e8e3f6';
+  import * as view3d from '../view3d.js?v=71f9f65b';
   window.view3d = view3d;
-  const s = document.createElement('script'); s.src = '../shop.js'; document.body.appendChild(s);
+  window.dispatchEvent(new Event('view3d'));
 </script>
 </body>
 </html>

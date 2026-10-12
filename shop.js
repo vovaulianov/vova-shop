@@ -13,6 +13,18 @@
 
   function el(tag, cls, parent) { var e = document.createElement(tag); if (cls) e.className = cls; if (parent) parent.appendChild(e); return e; }
   function src(p, size) { return root + p[size]; }
+  /* The 3D code (three.js, big) comes after the page: the grid doesn't wait for it, only spinning things do. */
+  var waiting3d = [];
+  function when3d(f) { if (window.view3d) f(window.view3d); else waiting3d.push(f); }
+  window.addEventListener('view3d', function () { waiting3d.splice(0).forEach(function (f) { f(window.view3d); }); });
+  /* A baked still: the thing fills the box and stands on its bottom edge (the same sums as view3d's place2). */
+  function placeStill(img, st, pic) {
+    var k = Math.min(pic.clientWidth / st.ow, pic.clientHeight / st.oh);
+    img.style.position = 'absolute'; img.style.transform = 'none';
+    img.style.width = st.cw * k + 'px'; img.style.height = st.ch * k + 'px';
+    img.style.left = (pic.clientWidth - st.ow * k) / 2 - (st.ox0 - st.x0) * k + 'px';
+    img.style.top = pic.clientHeight - (st.oy0 - st.y0 + st.oh) * k + 'px';
+  }
   function shown_(item) {                                       /* on a phone sizes are eased (a painting 7 → 3.9,
                                                                    a record 3.15 → 2.2): small things aren't specks */
     var s = item.size || 1;
@@ -37,13 +49,18 @@
     c.style.setProperty('--fh', (p0.h / long).toFixed(3));
     c.style.setProperty('--pb', (0.0536 * long / p0.h).toFixed(4));   /* the air under the cut-out, so it stands on the line */
     var pic = el('div', 'pic', c), img = el('img', null, pic);
-    img.src = src(item.photos[0], 's'); img.alt = item.title; img.loading = 'lazy'; img.decoding = 'async';
+    img.src = three && item.still ? src(item.still, 'src') : src(item.photos[0], 's'); img.alt = item.title; img.loading = 'lazy'; img.decoding = 'async';
     img.width = item.photos[0].w; img.height = item.photos[0].h;
     var label = el('div', 'label', c);
     label.textContent = item.title;
     tag(item, label, (rand(item.id + 'tag')() - 0.5) * 6);         /* the price sticker, under the name */
     c.addEventListener('click', function () { location.hash = item.id; });
-    if (three && window.view3d) { window.view3d.still(c, item); window.view3d.hover(c, item); }
+    if (three && item.still) {                                    /* the finished picture from the start */
+      c.classList.add('solid-still'); c._still = item.still;
+      var put = function () { placeStill(img, item.still, pic); };
+      put(); if (window.ResizeObserver) new ResizeObserver(put).observe(pic);
+    }
+    if (three) when3d(function (v) { if (!item.still) v.still(c, item); v.hover(c, item); });
   }
   function page() {
     if (layout === 'chaos' && !shown) {                         /* real proportions: the biggest thing fits the screen */
@@ -162,11 +179,11 @@
       if (path) { t.src = path; t.alt = ''; } else t.textContent = label;
       t.addEventListener('click', function () { pick(k); });
     }
-    if (three && window.view3d) solid = el('div', 'solid-box', stage);   /* the solid alone, no photos */
+    if (three) solid = el('div', 'solid-box', stage);                    /* the solid alone, no photos */
     else if (item.photos.length > 1) item.photos.forEach(function (p, k) { thumb(k, src(p, 's')); });
     view.classList.add('on');                                     /* shown first: the solid measures the stage */
     document.documentElement.style.overflow = 'hidden';
-    if (solid) { window.view3d.stage(solid, item); pick(-1); } else pick(0);
+    if (solid) { pick(-1); when3d(function (v) { if (solid.isConnected) v.stage(solid, item); }); } else pick(0);
   }
   function route() {
     var id = decodeURIComponent(location.hash.slice(1)), item = items.filter(function (i) { return i.id === id; })[0];
