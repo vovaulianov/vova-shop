@@ -82,7 +82,7 @@ img { display: block; }
 .item .thumbs { z-index: 1; }
 
 /* Chaos (the home page): things dropped on the floor, as big as the screen allows. */
-.chaos .grid { --u: clamp(64px, 11vw, 190px); display: block; position: relative; overflow-x: clip; box-sizing: border-box; }
+.chaos .grid { --u: clamp(52px, 8vw, 150px); display: block; position: relative; overflow-x: clip; box-sizing: border-box; }
 .chaos .cell { position: absolute; }
 .chaos .cell .label { visibility: hidden; }
 .chaos .cell:hover { z-index: 2; }

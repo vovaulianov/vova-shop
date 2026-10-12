@@ -67,10 +67,10 @@
     cells.forEach(function (c) {
       var r = rand(c.dataset.id), w = c.offsetWidth, h = c.querySelector('.pic').offsetHeight, best = null;
       var floor = placed.reduce(function (m, p) { return Math.max(m, p.y + p.h); }, 0);
-      for (var t = 0; t < 400; t++) {                      /* many tries; a high one wins, but not always the highest */
+      for (var t = 0; t < 900; t++) {                      /* many tries; a high one wins, but not always the highest */
         var x = edge + r() * Math.max(1, W - w - 2 * edge), y = r() * (floor + h * 0.8);
-        var free = placed.every(function (p) { return x + w + gap < p.x || p.x + p.w + gap < x || y + h + gap * 2 < p.y || p.y + p.h + gap * 2 < y; });
-        var score = y + r() * h * 1.1;
+        var free = placed.every(function (p) { return x + w + gap < p.x || p.x + p.w + gap < x || y + h + gap * 1.3 < p.y || p.y + p.h + gap * 1.3 < y; });
+        var score = y + r() * h * 0.35;
         if (free && (!best || score < best.score)) best = { x: x, y: y, w: w, h: h, score: score };
       }
       best = best || { x: edge, y: floor + gap * 2.5, w: w, h: h };
