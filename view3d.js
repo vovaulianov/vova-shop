@@ -501,7 +501,13 @@ function turnedModel(front, ft, aspect) {
   });
   const rest = new Uint8Array(G.n);                      // what sticks out of the body
   for (let y = 0; y <= H; y++) for (let x = 0; x <= W; x++) { const i = at(x, y); rest[i] = inside[i] && !(R[y] && Math.abs(x - c) <= R[y] * 1.06 + 2) ? 1 : 0; }
-  const parts = bigParts(G, rest, 0.012);                 // slivers along the body (the photo's perspective) go
+  let parts = bigParts(G, rest, 0.012);                   // slivers along the body (the photo's perspective) go
+  for (let grow = 0; grow < 7; grow++) {                  // then the handle reaches into the body a little: it joins
+    const e = parts.slice();
+    for (let y = 1; y < H; y++) for (let x = 1; x < W; x++) { const i = at(x, y);
+      if (!parts[i] && inside[i] && (parts[at(x - 1, y)] || parts[at(x + 1, y)] || parts[at(x, y - 1)] || parts[at(x, y + 1)])) e[i] = 1; }
+    parts = e;
+  }
   group.add(bar(G, parts, medianColour(G, (x, y) => parts[at(x, y)])));
   return group;
 }
