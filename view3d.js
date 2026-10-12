@@ -657,7 +657,7 @@ export const LOOKS = {
 const look = LOOKS[new URLSearchParams(location.search).get('look')] || LOOKS.soft;   // «б, мʼяко», the user's choice
 if (look.filter) {
   const st = document.createElement('style');
-  st.textContent = '.cell .pic img, .cell .pic canvas, .item .solid-box canvas { filter: ' + look.filter + '; }';
+  st.textContent = '.cell .pic canvas, .item .solid-box canvas { filter: ' + look.filter + '; }';   /* stills have it baked in */
   document.head.appendChild(st);
 }
 
@@ -736,6 +736,11 @@ export async function bake(item, w, h) {
   frame(g, group, w * ROOM, h * ROOM, ROOM);
   g.r.render(g.scene, g.cam);
   const cut = crop(g.canvas);
+  if (look.filter) {                                     // the look baked into the picture (white stays white)
+    const im = new Image(); im.src = cut.url; await im.decode();
+    const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+    const x = c.getContext('2d'); x.filter = look.filter; x.drawImage(im, 0, 0); cut.url = c.toDataURL('image/png');
+  }
   return { W: g.canvas.width, H: g.canvas.height, ...cut };
 }
 
