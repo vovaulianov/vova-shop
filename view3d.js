@@ -767,7 +767,8 @@ export function place2(img, st, pic) {
 }
 export function hover(cell, item) {
   const g = shared();
-  cell.addEventListener('pointerenter', async () => {
+  cell.addEventListener('pointerenter', async e => {
+    if (e.pointerType !== 'mouse') return;               // a finger has no hover: a tap just opens the thing
     g.cell = cell;
     const group = (await model(item)).clone();            // its own copy: the stills keep theirs
     await shared('stills').queue;                          // this cell's still first: the spin starts exactly on it
@@ -792,8 +793,8 @@ export function hover(cell, item) {
       g.loop = g.cell ? requestAnimationFrame(tick) : null;
     });
   });
-  cell.addEventListener('pointerleave', () => {
-    if (g.cell !== cell) return;
+  cell.addEventListener('pointerleave', e => {
+    if (e.pointerType !== 'mouse' || g.cell !== cell) return;
     g.cell = null; cell.classList.remove('live-on');
     const thing = g.scene.children.find(o => o.userData.thing);
     if (thing) thing.rotation.y = 0;

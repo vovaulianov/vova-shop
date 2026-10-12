@@ -13,6 +13,11 @@
 
   function el(tag, cls, parent) { var e = document.createElement(tag); if (cls) e.className = cls; if (parent) parent.appendChild(e); return e; }
   function src(p, size) { return root + p[size]; }
+  function shown_(item) {                                       /* on a phone sizes are eased (a painting 7 → 3.9,
+                                                                   a record 3.15 → 2.2): small things aren't specks */
+    var s = item.size || 1;
+    return innerWidth < 600 ? Math.pow(s, 0.7) : s;
+  }
   /* A price sticker, like the green ones from a price gun on old American shelves. */
   function tag(item, parent, tilt) {
     var t = el('span', 'tag' + (item.sold ? ' sold' : ''), parent);
@@ -25,7 +30,7 @@
     var c = el('div', 'cell' + (item.sold ? ' sold' : ''), grid);
     c.dataset.id = item.id;
     var p0 = item.photos[0], long = Math.max(p0.w, p0.h);
-    c.style.setProperty('--s', item.size || 1);                   /* the box: its size, the photo's proportions */
+    c.style.setProperty('--s', shown_(item));                   /* the box: its size, the photo's proportions */
     c.style.setProperty('--fw', (p0.w / long).toFixed(3));
     c.style.setProperty('--fh', (p0.h / long).toFixed(3));
     c.style.setProperty('--pb', (0.0536 * long / p0.h).toFixed(4));   /* the air under the cut-out, so it stands on the line */
@@ -40,7 +45,7 @@
   }
   function page() {
     if (layout === 'chaos' && !shown) {                         /* real proportions: the biggest thing fits the screen */
-      var big = items.reduce(function (m, i) { return Math.max(m, i.size || 1); }, 1);
+      var big = items.reduce(function (m, i) { return Math.max(m, shown_(i)); }, 1);
       var cs = getComputedStyle(grid), room = grid.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
       grid.style.setProperty('--u', Math.max(26, Math.min(room * 0.8 / big, innerHeight * 0.78 / big, 130)) + 'px');
     }
@@ -60,7 +65,7 @@
     clearTimeout(scatter.t);
     scatter.t = setTimeout(function () {
       placed = []; shown = shown;
-      var big = items.reduce(function (m, i) { return Math.max(m, i.size || 1); }, 1);
+      var big = items.reduce(function (m, i) { return Math.max(m, shown_(i)); }, 1);
       var cs = getComputedStyle(grid), room = grid.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
       grid.style.setProperty('--u', Math.max(26, Math.min(room * 0.8 / big, innerHeight * 0.78 / big, 130)) + 'px');
       [].forEach.call(grid.children, function (c) { delete c.dataset.placed; });
@@ -146,9 +151,14 @@
                fetch(root + 'shop.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).catch(function () { return {}; })])
     .then(function (r) {
       items = r[0]; pay = (r[1] && r[1].pay) || '';
-      if (layout === 'chaos') {                                /* a rhythm: one big thing, then two small ones by it */
-        var bySize = items.slice().sort(function (a, b) { return (b.size || 1) - (a.size || 1); }), mixed = [];
-        while (bySize.length) { mixed.push(bySize.shift()); if (bySize.length) mixed.push(bySize.pop()); if (bySize.length > 2) mixed.push(bySize.pop()); }
+      if (layout === 'chaos') {                                /* a rhythm: a big thing, a small one, a middle one, */
+        var big = [], mid = [], small = [];                    /* a small one, a middle one — and again */
+        items.slice().sort(function (a, b) { return (b.size || 1) - (a.size || 1); }).forEach(function (i) {
+          ((i.size || 1) >= 5 ? big : (i.size || 1) >= 3 ? mid : small).push(i); });
+        var books = mid.filter(function (i) { return i.kind === 'book'; }), others = mid.filter(function (i) { return i.kind !== 'book'; });
+        mid = []; while (books.length || others.length) { if (others.length) mid.push(others.shift()); if (books.length) mid.push(books.shift()); }
+        var mixed = [], pattern = [big, small, mid, small, mid];
+        for (var k = 0; big.length + mid.length + small.length; k++) { var from = pattern[k % 5]; if (from.length) mixed.push(from.shift()); }
         items = mixed;
       }
       var n = items.filter(function (i) { return !i.sold; }).length, d = n % 10, h = n % 100;
