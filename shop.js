@@ -13,6 +13,9 @@
 
   function el(tag, cls, parent) { var e = document.createElement(tag); if (cls) e.className = cls; if (parent) parent.appendChild(e); return e; }
   function src(p, size) { return root + p[size]; }
+  function count(path, title, event) {                       /* goatcounter: a thing opened, «купити» pressed */
+    if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: path, title: title, event: !!event });
+  }
   /* The 3D code (three.js, big) comes after the page: the grid doesn't wait for it, only spinning things do. */
   var waiting3d = [];
   function when3d(f) { if (window.view3d) f(window.view3d); else waiting3d.push(f); }
@@ -165,7 +168,9 @@
     if (item.text) el('p', null, info).textContent = item.text;
     var link = item.pay || (pay ? pay + (pay.indexOf('?') < 0 ? '?' : '&') +                 /* the jar takes hryvnias only */
       ((item.currency || 'грн') === 'грн' ? 'a=' + item.price + '&' : '') + 't=' + encodeURIComponent(item.title) : '');
-    if (!item.sold && link) { var a = el('a', null, info); a.href = link; a.target = '_blank'; a.rel = 'noopener'; a.className = 'buy'; a.textContent = 'купити'; }
+    if (!item.sold && link) { var a = el('a', null, info); a.href = link; a.target = '_blank'; a.rel = 'noopener'; a.className = 'buy'; a.textContent = 'купити';
+      a.addEventListener('click', function () { count('купити/' + item.id, 'купити: ' + item.title, true); }); }
+    count('річ/' + item.id, item.title);
 
     var big = el('img', 'photo', stage), solid = null, thumbs = el('div', 'thumbs', stage);
     function pick(k) {                                  /* k = -1: the 3D thing; otherwise a photo */
