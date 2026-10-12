@@ -2,7 +2,7 @@
  {
   "id": "art-nouveau",
   "title": "art nouveau",
-  "price": 900,
+  "price": 777,
   "text": "книжка-альбом про модерн",
   "photos": [
    {
@@ -123,7 +123,7 @@
    }
   ],
   "currency": "грн",
-  "size": 3.1,
+  "size": 3.5,
   "back": 1,
   "pay": "",
   "sold": false,
@@ -135,7 +135,7 @@
  {
   "id": "large-graphics",
   "title": "large graphics",
-  "price": 900,
+  "price": 505,
   "text": "книжка-альбом про великоформатну графіку",
   "photos": [
    {
@@ -260,7 +260,7 @@
    }
   ],
   "currency": "грн",
-  "size": 2.9,
+  "size": 3.4,
   "back": 1,
   "pay": "",
   "sold": false,
@@ -404,7 +404,7 @@
  {
   "id": "kartyna-z-oblychchiam",
   "title": "картина з обличчям",
-  "price": 3000,
+  "price": 19111,
   "text": "полотно на підрамнику, акрил, чорно-біла",
   "photos": [
    {
@@ -535,7 +535,7 @@
  {
   "id": "batkivshchyna-maty",
   "title": "батьківщина-мати",
-  "price": 3000,
+  "price": 10002,
   "text": "полотно на підрамнику, акрил, жовте на синьому",
   "photos": [
    {
@@ -666,7 +666,7 @@
  {
   "id": "kartyna-z-zhinkoiu",
   "title": "картина з жінкою",
-  "price": 3000,
+  "price": 4444,
   "text": "полотно на підрамнику, акрил, чорно-біла",
   "photos": [
    {
@@ -1452,7 +1452,7 @@
  {
   "id": "chainyk-hay",
   "title": "чайник hay",
-  "price": 2400,
+  "price": 5555,
   "text": "електрочайник hay, світло-сірий, 1,5 л",
   "photos": [
    {
@@ -1940,7 +1940,7 @@
  {
   "id": "toster-hay",
   "title": "тостер hay",
-  "price": 2600,
+  "price": 6666,
   "text": "тостер hay на два тости, сірий, в ідеальному стані",
   "photos": [
    {
@@ -2072,7 +2072,7 @@
  {
   "id": "dzhezva",
   "title": "джезва",
-  "price": 450,
+  "price": 911,
   "text": "мідна джезва з деревʼяною ручкою, для кави по-турецьки",
   "photos": [
    {
@@ -2624,7 +2624,7 @@
  {
   "id": "fujifilm-instax-mini-11",
   "title": "fujifilm instax mini 11",
-  "price": 2200,
+  "price": 2228,
   "text": "камера миттєвого друку, рожева, з ремінцем. працює, касети купуються окремо",
   "photos": [
    {
@@ -3160,7 +3160,7 @@
  {
   "id": "kloun-tiahuchka",
   "title": "клоун-тягучка",
-  "price": 777,
+  "price": 67,
   "text": "тягнеться майже на метр і повертається назад. трохи страшний, дуже смішний",
   "photos": [
    {
@@ -4008,7 +4008,7 @@
     ]
    }
   ],
-  "currency": "$",
+  "currency": "грн",
   "size": 1.7,
   "back": 1,
   "pay": "",

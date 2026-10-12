@@ -144,7 +144,8 @@ function relief(front, back, ft, bt, depthScale = 0.8, lathe = false) {
     for (let y = 0; y <= H; y++) for (let x = 0; x <= W; x++) {
       const i = at(x, y); if (!inside[i]) { d[i] = 0; continue; }
       const off = Math.abs(x - c);
-      if (R[y] && off <= R[y] + 1.5) { d[i] = 0; body[i] = 1; continue; }   /* the body: its own turned mesh below */
+      if (R[y] && off <= R[y] * 1.12 + 2) { d[i] = 0; body[i] = 1; continue; }   /* the body (and slivers of it the photo's
+                                                       perspective puts to one side): its own turned mesh below */
       const [l, r] = runH(x, y), [t, b] = runV(x, y);
       const rr = r - l < b - t ? [(r - l + 1) / 2, x - (l + r) / 2] : [(b - t + 1) / 2, y - (t + b) / 2];
       d[i] = Math.sqrt(Math.max(0, rr[0] * rr[0] - rr[1] * rr[1]));
@@ -216,7 +217,7 @@ function relief(front, back, ft, bt, depthScale = 0.8, lathe = false) {
         for (let k = 0; k <= N; k++) {
           const th = from + (to - from) * k / N, xs = latheC + R * Math.sin(th);
           pos.push(fb.x0 + xs * sx, (1 - fb.y0) * aspect - y * sy, R * sx * Math.cos(th) * depthScale);
-          const s_ = xs / W;
+          const s_ = (latheC + R * 0.86 * Math.sin(th)) / W;   /* the picture from a hair inside the outline: no dark rim at the seam */
           uv.push(mirror && bb ? bb.x0 + (1 - s_) * (bb.x1 - bb.x0) : fb.x0 + s_ * (fb.x1 - fb.x0),
                   mirror && bb ? 1 - (bb.y0 + (y / H) * (bb.y1 - bb.y0)) : v);
         }
@@ -234,7 +235,41 @@ function relief(front, back, ft, bt, depthScale = 0.8, lathe = false) {
       geo.setIndex(idx); geo.computeVertexNormals();
       return new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.45, side: THREE.DoubleSide }));
     };
-    group.add(half(-Math.PI / 2, Math.PI / 2, ft, false), half(Math.PI / 2, Math.PI * 1.5, bt ? backTex : ft, true));
+    /* The photo's own light taken out: each column of the body brought to the same brightness, so the turned
+       surface is lit by the 3D light alone, with no dark band where the photo's shadow side gets stretched round. The
+       back half uses the same picture, mirrored: the two halves then meet without a seam. */
+    const flatTex = (() => {
+      const W2 = img.width, H2 = img.height, c2 = document.createElement('canvas'); c2.width = W2; c2.height = H2;
+      const g2 = c2.getContext('2d'); g2.drawImage(img, 0, 0);
+      const im = g2.getImageData(0, 0, W2, H2), px = im.data;
+      const x0 = Math.floor(fb.x0 * W2), y0 = Math.floor(fb.y0 * H2), y1 = Math.ceil(fb.y1 * H2);
+      const colL = new Float32Array(W2), colN = new Float32Array(W2);
+      for (let y = y0; y < y1; y++) {
+        const yy = Math.round((y / H2 - fb.y0) / (fb.y1 - fb.y0) * H); const R = latheR[Math.min(H, Math.max(0, yy))];
+        if (!R) continue;
+        const l = Math.round((fb.x0 + (latheC - R) / W * (fb.x1 - fb.x0)) * W2), r = Math.round((fb.x0 + (latheC + R) / W * (fb.x1 - fb.x0)) * W2);
+        for (let x = Math.max(0, l); x < Math.min(W2, r); x++) {
+          const i = (y * W2 + x) * 4; if (px[i + 3] < 200) continue;
+          colL[x] += px[i] * 0.3 + px[i + 1] * 0.59 + px[i + 2] * 0.11; colN[x]++;
+        }
+      }
+      const prof = new Float32Array(W2); let tot = 0, cnt = 0;
+      for (let x = 0; x < W2; x++) if (colN[x] > 10) { prof[x] = colL[x] / colN[x]; tot += prof[x]; cnt++; }
+      const mean = cnt ? tot / cnt : 1, sm = new Float32Array(W2);
+      for (let x = 0; x < W2; x++) {                     // smoothed, and only where there was body
+        let t = 0, n2 = 0; for (let k = -12; k <= 12; k++) { const q = x + k; if (q >= 0 && q < W2 && prof[q]) { t += prof[q]; n2++; } }
+        sm[x] = n2 ? t / n2 : mean;
+      }
+      for (let y = 0; y < H2; y++) for (let x = 0; x < W2; x++) {
+        const i = (y * W2 + x) * 4, k = Math.min(1.6, Math.max(0.7, mean / Math.max(20, sm[x])));
+        px[i] = Math.min(255, px[i] * k); px[i + 1] = Math.min(255, px[i + 1] * k); px[i + 2] = Math.min(255, px[i + 2] * k);
+      }
+      g2.putImageData(im, 0, 0);
+      const t2 = new THREE.CanvasTexture(c2); t2.colorSpace = THREE.SRGBColorSpace; t2.anisotropy = 8;
+      return t2;
+    })();
+    const front_ = half(-Math.PI / 2, Math.PI / 2, flatTex, false), back_ = half(Math.PI / 2, Math.PI * 1.5, flatTex, false);
+    group.add(front_, back_);
     const capColour = edgeColour(img, front.outline);
     [rows[0], rows[rows.length - 1]].forEach(y => {         // flat top and bottom
       const cap = new THREE.Mesh(new THREE.CircleGeometry(latheR[y] * sx, N), new THREE.MeshStandardMaterial({ color: capColour, roughness: 0.6, side: THREE.DoubleSide }));
@@ -403,7 +438,7 @@ function stageScene() {                                  // no shadow: the thing
   const scene = new THREE.Scene();
   const key = new THREE.DirectionalLight(0xffffff, look.key);
   key.position.set(1.2, 2.2, 2.4);
-  const fill = new THREE.DirectionalLight(0xffffff, look.key * 0.7);   // from behind: a turned thing's back isn't in the dark
+  const fill = new THREE.DirectionalLight(0xffffff, look.key * 0.95);   // from behind: a turned thing's back isn't in the dark
   fill.position.set(-1.4, 1.8, -2.4);
   scene.add(key, fill, new THREE.HemisphereLight(0xffffff, 0xe8e4de, look.hemi));
   scene.environmentIntensity = look.env;
